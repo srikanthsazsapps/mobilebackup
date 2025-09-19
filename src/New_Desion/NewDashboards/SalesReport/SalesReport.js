@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ImageBackground } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import Animated, { 
   useSharedValue, 
@@ -33,21 +33,28 @@ const SalesReport = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Draggable Container */}
-      <PanGestureHandler onGestureEvent={gestureHandler}>
-        <Animated.View style={[styles.vehicleWrapper, animatedStyle]}>
-          {/* Drag Handle */}
-          <View style={styles.dragBarContainer}>
-            <View style={styles.dragHandle} />
-          </View>
-          
-          {/* Content Container */}
-          <View style={styles.contentContainer}>
-            <Text style={styles.title}>Content Here</Text>
-            <Text style={styles.subtitle}>Drag me up and down</Text>
-          </View>
-        </Animated.View>
-      </PanGestureHandler>
+      {/* Background Image */}
+      <ImageBackground 
+        source={require('../../../images/22.png')} // Replace with your image path
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
+        {/* Draggable Container */}
+        <PanGestureHandler onGestureEvent={gestureHandler}>
+          <Animated.View style={[styles.vehicleWrapper, animatedStyle]}>
+            {/* Drag Handle */}
+            <View style={styles.dragBarContainer}>
+              <View style={styles.dragHandle} />
+            </View>
+            
+            {/* Content Container */}
+            <View style={styles.contentContainer}>
+              <Text style={styles.title}>Content Here</Text>
+              <Text style={styles.subtitle}>Drag me up and down</Text>
+            </View>
+          </Animated.View>
+        </PanGestureHandler>
+      </ImageBackground>
     </SafeAreaView>
   );
 };
@@ -55,7 +62,12 @@ const SalesReport = () => {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#F5F6FA' 
+  },
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    bottom:60,
   },
   vehicleWrapper: { 
     backgroundColor: '#fff', 
@@ -63,11 +75,18 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 40, 
     borderTopRightRadius: 40, 
     elevation: 5, 
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    top: 100, // Start partially visible
+    top: 200, // Start partially visible
     height: '100%'
   },
   dragBarContainer: { 
@@ -90,6 +109,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: '#333',
   },
   subtitle: {
     fontSize: 14,

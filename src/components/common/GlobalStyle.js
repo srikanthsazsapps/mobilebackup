@@ -67,8 +67,7 @@ fontFamily: 'PlusJakartaSans-SemiBold',
   heading6: {
 
     fontSize: 18,
-fontFamily: 'PlusJakartaSans-SemiBold',
-     // fontWeight: 'bold',   
+fontFamily: 'PlusJakartaSans-SemiBold',     // fontWeight: 'bold',   
     color: '#000000',
   },
 

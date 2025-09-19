@@ -52,6 +52,7 @@ const highlyUsedStyles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+    fontFamily: 'PlusJakartaSans-SemiBold',
   },
   title: {
     marginLeft: 16,
@@ -60,6 +61,7 @@ const highlyUsedStyles = StyleSheet.create({
     textShadowColor: 'rgba(255, 255, 255, 0.8)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
+    fontFamily: 'PlusJakartaSans-SemiBold',
   },
   viewMore: {
     marginRight: 5,
@@ -70,6 +72,7 @@ const highlyUsedStyles = StyleSheet.create({
     textShadowColor: 'rgba(255, 255, 255, 0.8)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
+    fontFamily: 'PlusJakartaSans-SemiBold',
   },
   statsContainer: {
     flexDirection: 'row',
