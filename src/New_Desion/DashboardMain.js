@@ -36,7 +36,7 @@ const DashboardMain = ({ navigation }) => {
     ['Production', 'production', 'ProductionDashBoard'],
     ['Purchase', 'purchase', 'PurchaseDashBoard'],
     ['Profit & Loss', 'profit_loss', 'ProfitlLoss'],
-    ['Sales', 'sales', 'SalesDashBoard'],
+    ['Sales', 'sales', 'SalesReport'],
     ['TrendAnalysis', 'trend_analysis', 'TrendAnalysisDashBoard'],
     ['Profit', 'profit', 'ProfitDashBoard'],
     ['Profit & Loss', 'profit_loss', 'ProfitLossDashBoard2'],
