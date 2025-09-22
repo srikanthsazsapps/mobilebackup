@@ -745,3 +745,399 @@ export const DataProvider = ({ children }) => {
     </DataContext.Provider>
   );
 };
+
+// import React, { createContext, useState, useEffect, useCallback } from 'react';
+// import { getStoredData } from './AsyncStorage';
+// import base64 from 'react-native-base64';
+// import axios from 'axios';
+// import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// export const DataContext = createContext();
+
+// export const DASHBOARD_TYPES = {
+//   SALES: 'sales',
+//   PURCHASE: 'purchase',
+// };
+
+// const combineDateTime = (date, time) => {
+//   if (!date || !time) {
+//     const now = new Date();
+//     return now.toISOString().slice(0, 19).replace('T', ' ');
+//   }
+//   const combined = new Date(date);
+//   combined.setHours(time.getHours(), time.getMinutes(), time.getSeconds());
+//   return combined.toISOString().slice(0, 19).replace('T', ' ');
+// };
+
+// const GetUserMenus = async (userData) => {
+//   try {
+//     const { Webkey, UserId } = userData || {};
+//     if (!Webkey || !UserId) {
+//       console.error('Missing required user data for GetUserMenus:', userData);
+//       return [];
+//     }
+//     const Username = userData?.Username;
+//     const Password = userData?.Password;
+//     console.log('Using credentials for GetUserMenus - Username:', Username, 'Password:', Password, 'UserId:', UserId);
+
+//     const authHeader2 = `Basic ${base64.encode(`${Username}:${Password}`)}`;
+//     const today = new Date();
+//     const formattedDate = today.toISOString().split('T')[0];
+//     const apiUrl = `https://${Webkey}.sazss.in/Api/UserMenus?UserId=${UserId}`;
+//     const response = await axios.get(apiUrl, {
+//       headers: {
+//         Authorization: authHeader2,
+//       },
+//     });
+//     return response.data;
+//   } catch (error) {
+//     console.error('Error during API call000:', error);
+//     return [];
+//   }
+// };
+
+// const GatherData = async (userData, fromDate, toDate, dashName) => {
+//   try {
+//     const { Webkey } = userData || {};
+//     if (!Webkey) {
+//       console.error('Missing required user data for GatherData:', userData);
+//       return [];
+//     }
+//     const Username = userData?.Username;
+//     const Password = userData?.Password;
+//     console.log('Using credentials for GatherData - Username:', Username, 'Password:', Password);
+
+//     const authHeader2 = `Basic ${base64.encode(`${Username.trim()}:${Password.trim()}`)}`;
+//     const apiUrl = `https://${Webkey}.sazss.in/Api/DashesDatas`;
+//     const response = await axios.post(
+//       apiUrl,
+//       {
+//         dashname: dashName,
+//         fromDate: fromDate,
+//         toDate: toDate,
+//       },
+//       {
+//         headers: {
+//           Authorization: authHeader2,
+//         },
+//       },
+//     );
+//     return response.data;
+//   } catch (error) {
+//     console.error('Error during API call:', error);
+//     return [];
+//   }
+// };
+
+// const AttendanceGatherData = async (userData, actionData) => {
+//   try {
+//     const { Webkey } = userData || {};
+//     if (!Webkey) {
+//       console.error('Missing required user data for AttendanceGatherData:', userData);
+//       throw new Error('Missing Webkey');
+//     }
+//     const Username = userData?.Username;
+//     const Password = userData?.Password;
+//     console.log('Using credentials for AttendanceGatherData - Username:', Username, 'Password:', Password);
+
+//     const authHeader2 = `Basic ${base64.encode(`${Username.trim()}:${Password.trim()}`)}`;
+//     const apiUrl = `https://${Webkey}.sazss.in/Api/EmployeeAttendance`;
+    
+//     const response = await axios.post(
+//       apiUrl,
+//       actionData,
+//       {
+//         headers: {
+//           Authorization: authHeader2,
+//         },
+//       },
+//     );
+//     console.log('Attendance API Response:', response.data, new Date().toISOString());
+//     return response.data;
+//   } catch (error) {
+//     console.error('Error during Attendance API call:', error, new Date().toISOString());
+//     throw error;
+//   }
+// };
+
+// export const DataProvider = ({ children }) => {
+//   const [dailyData, setDailyData] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [selectedCompany, setSelectedCompany] = useState(0);
+//   const [startDate, setStartDate] = useState(null);
+//   const [endDate, setEndDate] = useState(null);
+//   const [startTime, setStartTime] = useState(null);
+//   const [endTime, setEndTime] = useState(null);
+//   const [userMenus, setUserMenus] = useState([]);
+//   const [currentDashboardType, setCurrentDashboardType] = useState(DASHBOARD_TYPES.SALES);
+//   const [attendanceData, setAttendanceData] = useState(null);
+//   const [isDateInitialized, setIsDateInitialized] = useState(false);
+
+//   const initializeDates = useCallback(() => {
+//     const defaultTime = new Date();
+//     defaultTime.setHours(8, 0, 0, 0); // Set to 8 AM
+//     const now = new Date();
+//     const localTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+
+//     if (localTime.getHours() < 8) {
+//       const yesterday = new Date(localTime);
+//       yesterday.setDate(localTime.getDate() - 1);
+//       setStartDate(yesterday);
+//       setEndDate(localTime);
+//     } else {
+//       const tomorrow = new Date(localTime);
+//       tomorrow.setDate(localTime.getDate() + 1);
+//       setStartDate(localTime);
+//       setEndDate(tomorrow);
+//     }
+//     setStartTime(defaultTime);
+//     setEndTime(defaultTime);
+//     setIsDateInitialized(true);
+//   }, []);
+
+//   useEffect(() => {
+//     initializeDates();
+//   }, [initializeDates]);
+
+//   useEffect(() => {
+//     const SetCompany = async () => {
+//       const localCom = await AsyncStorage.getItem('SelectedCompany');
+//       if (localCom) {
+//         setSelectedCompany(JSON.parse(localCom));
+//       } else {
+//         setSelectedCompany(0);
+//       }
+//       const localData = await getStoredData('CompanyDetails');
+//       if (localData && localData.length > 0 && selectedCompany !== 0) {
+//         const selectedItem = localData.find((val) => val.id === selectedCompany);
+//         if (selectedItem && (!selectedItem.Username || !selectedItem.Password)) {
+//           console.warn('Selected company missing Username or Password, using defaults');
+//         }
+//       }
+//     };
+//     SetCompany();
+//   }, [selectedCompany]);
+
+//   const RefreshData = async () => {
+//     await AsyncStorage.setItem('SelectedCompany', JSON.stringify(selectedCompany));
+//     if (isDateInitialized && startDate && endDate && startTime && endTime) fetchData();
+//   };
+
+//   const switchDashboardType = (dashType) => {
+//     setCurrentDashboardType(dashType);
+//     if (isDateInitialized && startDate && endDate && startTime && endTime) fetchData(dashType);
+//   };
+
+//   const fetchDataCustom = async (startDatee, endDatee, dashType = currentDashboardType) => {
+//     if (!startDatee || !endDatee) {
+//       console.warn('fetchDataCustom called with invalid dates, using defaults');
+//       return;
+//     }
+//     try {
+//       setLoading(true);
+//       setTimeout(() => {}, 1000);
+//       const localData = await getStoredData('CompanyDetails');
+//       const selectedItem = selectedCompany === 0 ? localData[0] : localData.find((val) => val.id === selectedCompany);
+//       const formattedFromDate = combineDateTime(startDatee, new Date());
+//       const formattedToDate = combineDateTime(endDatee, new Date());
+//       const menus = await GetUserMenus(selectedItem);
+//       setUserMenus(menus[0] || []);
+
+//       if (selectedCompany === 0) {
+//         const allData = [];
+//         for (const obj of localData) {
+//           const data = await GatherData(obj, formattedFromDate, formattedToDate, dashType);
+//           if (data && Array.isArray(data)) {
+//             allData.push(...data);
+//           }
+//         }
+//         setDailyData(allData);
+//       } else if (selectedCompany !== 0 && selectedItem) {
+//         const data = await GatherData(selectedItem, formattedFromDate, formattedToDate, dashType);
+//         setDailyData(data || []);
+//       }
+//     } catch (error) {
+//       console.error('Error fetching stored data:', error);
+//     } finally {
+//       setTimeout(() => {
+//         setLoading(false);
+//       }, 2000);
+//     }
+//   };
+
+//   const fetchData = async (dashType = currentDashboardType) => {
+//     if (!isDateInitialized || !startDate || !endDate || !startTime || !endTime) {
+//       console.warn('fetchData called with incomplete date/time, initializing dates');
+//       initializeDates();
+//       return;
+//     }
+//     try {
+//       setLoading(true);
+//       setTimeout(() => {}, 1000);
+//       const localData = await getStoredData('CompanyDetails');
+//       const selectedItem = selectedCompany === 0 ? localData[0] : localData.find((val) => val.id === selectedCompany);
+//       const formattedFromDate = combineDateTime(startDate, startTime);
+//       const formattedToDate = combineDateTime(endDate, endTime);
+//       const menus = await GetUserMenus(selectedItem);
+//       setUserMenus(menus[0] || []);
+
+//       if (selectedCompany === 0) {
+//         const allData = [];
+//         for (const obj of localData) {
+//           const data = await GatherData(obj, formattedFromDate, formattedToDate, dashType);
+//           if (data && Array.isArray(data)) {
+//             allData.push(...data);
+//           }
+//         }
+//         setDailyData(allData);
+//       } else if (selectedCompany !== 0 && selectedItem) {
+//         const data = await GatherData(selectedItem, formattedFromDate, formattedToDate, dashType);
+//         setDailyData(data || []);
+//       }
+//     } catch (error) {
+//       console.error('Error fetching stored data:', error);
+//     } finally {
+//       setTimeout(() => {
+//         setLoading(false);
+//       }, 2000);
+//     }
+//   };
+
+//   const SetToday = (dashType = currentDashboardType) => {
+//     const now = new Date();
+//     const localTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+//     const defaultTime = new Date();
+//     defaultTime.setHours(8, 0, 0, 0);
+
+//     if (localTime.getHours() < 8) {
+//       const yesterday = new Date(localTime);
+//       yesterday.setDate(localTime.getDate() - 1);
+//       fetchDataCustom(yesterday, localTime, dashType);
+//       setStartDate(yesterday);
+//       setEndDate(localTime);
+//     } else {
+//       const tomorrow = new Date(localTime);
+//       tomorrow.setDate(localTime.getDate() + 1);
+//       fetchDataCustom(localTime, tomorrow, dashType);
+//       setStartDate(localTime);
+//       setEndDate(tomorrow);
+//     }
+//     setStartTime(defaultTime);
+//     setEndTime(defaultTime);
+//   };
+
+//   const SetYesterday = (dashType = currentDashboardType) => {
+//     const now = new Date();
+//     const localTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+//     const defaultTime = new Date();
+//     defaultTime.setHours(8, 0, 0, 0);
+
+//     if (localTime.getHours() < 8) {
+//       const dayBeforeYesterday = new Date(localTime);
+//       dayBeforeYesterday.setDate(localTime.getDate() - 2);
+//       const yesterday = new Date(localTime);
+//       yesterday.setDate(localTime.getDate() - 1);
+//       fetchDataCustom(dayBeforeYesterday, yesterday, dashType);
+//       setStartDate(dayBeforeYesterday);
+//       setEndDate(yesterday);
+//     } else {
+//       const yesterday = new Date(localTime);
+//       yesterday.setDate(localTime.getDate() - 1);
+//       fetchDataCustom(yesterday, localTime, dashType);
+//       setStartDate(yesterday);
+//       setEndDate(localTime);
+//     }
+//     setStartTime(defaultTime);
+//     setEndTime(defaultTime);
+//   };
+
+//   const SetWeek = (dashType = currentDashboardType) => {
+//     const now = new Date();
+//     const localTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+//     const defaultTime = new Date();
+//     defaultTime.setHours(8, 0, 0, 0);
+//     const dayOfWeek = localTime.getDay();
+//     const startOfWeek = new Date(localTime);
+//     startOfWeek.setDate(localTime.getDate() - dayOfWeek);
+//     startOfWeek.setHours(8, 0, 0, 0);
+//     const endOfWeek = new Date(startOfWeek);
+//     endOfWeek.setDate(startOfWeek.getDate() + 7);
+//     endOfWeek.setHours(8, 0, 0, 0);
+//     fetchDataCustom(startOfWeek, endOfWeek, dashType);
+//     setStartDate(startOfWeek);
+//     setEndDate(endOfWeek);
+//     setStartTime(defaultTime);
+//     setEndTime(defaultTime);
+//   };
+
+//   const SetMonth = (dashType = currentDashboardType) => {
+//     const now = new Date();
+//     const defaultTime = new Date();
+//     defaultTime.setHours(8, 0, 0, 0);
+//     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 8, 0, 0, 0);
+//     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1, 8, 0, 0, 0);
+//     fetchDataCustom(startOfMonth, endOfMonth, dashType);
+//     setStartDate(startOfMonth);
+//     setEndDate(endOfMonth);
+//     setStartTime(defaultTime);
+//     setEndTime(defaultTime);
+//   };
+
+//   const processAttendanceAction = async (actionData) => {
+//     try {
+//       setLoading(true);
+//       const localData = await getStoredData('CompanyDetails');
+//       if (!localData || localData.length === 0) {
+//         throw new Error('No company data available');
+//       }
+//       const currentCompany = localData.find((val) => val.id === selectedCompany) || localData[0];
+//       const Username = currentCompany?.Username || 'Inventory';
+//       const Password = currentCompany?.Password || 'SazsApps@123';
+//       console.log('Using credentials for Attendance - Username:', Username, 'Password:', Password);
+
+//       const updatedActionData = {
+//         ...actionData,
+//         Timestamp: new Date().toISOString(), // Ensure precise timing for attendance
+//       };
+//       const response = await AttendanceGatherData(currentCompany, updatedActionData);
+//       setAttendanceData(response);
+//       return response;
+//     } catch (error) {
+//       console.error('Attendance action failed:', error, new Date().toISOString());
+//       throw error;
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   return (
+//     <DataContext.Provider
+//       value={{
+//         dailyData,
+//         loading,
+//         selectedCompany,
+//         setSelectedCompany,
+//         RefreshData,
+//         startDate,
+//         setStartDate,
+//         endDate,
+//         setEndDate,
+//         setStartTime,
+//         startTime,
+//         setEndTime,
+//         endTime,
+//         SetToday,
+//         SetYesterday,
+//         SetWeek,
+//         SetMonth,
+//         userMenus,
+//         currentDashboardType,
+//         switchDashboardType,
+//         DASHBOARD_TYPES,
+//         attendanceData,
+//         processAttendanceAction,
+//       }}>
+//       {children}
+//     </DataContext.Provider>
+//   );
+// };

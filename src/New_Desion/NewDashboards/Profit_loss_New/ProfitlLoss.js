@@ -456,10 +456,11 @@ const styles = StyleSheet.create({
   animatedCardPosition: {
     position: 'absolute',
     top: '20%',
-    left: '50%',
-    marginLeft: -screenWidth * 0.5,
+    left: 0,
+    right: 0,
+    marginHorizontal: 20,  // Equal margin on both sides
     marginTop: -40,
-    width: screenWidth * 0.9,
+    width: screenWidth - 60,  // Adjust width to account for margins
     zIndex: 10,
   },
   header: {

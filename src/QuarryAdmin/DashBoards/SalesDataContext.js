@@ -7,9 +7,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export const SalesDataContext = createContext();
 
 export const DASHBOARD_TYPES = {
-  SALES : 'sales',
-  PURCHASE : 'purchase',
-}
+  SALES: 'sales',
+  PURCHASE: 'purchase',
+};
 
 const combineDateTime = (date, time) => {
   const combined = new Date(date);
@@ -42,7 +42,7 @@ const GatherData = async (userData, fromDate, toDate, dashName) => {
     const {Webkey, GstNo, Username, Password} = userData;
     const authHeader2 = `Basic ${base64.encode(`${Username.trim()}:${Password.trim()}`)}`;
     const today = new Date();
-    console.log(Webkey, GstNo, Username, Password,'rfutfyt');
+    console.log(Webkey, GstNo, Username, Password, 'rfutfyt');
     
     const formattedDate = today.toISOString().split('T')[0];
     const apiUrl = `https://${Webkey}.sazss.in/Api/DashesDatas`;
@@ -59,16 +59,100 @@ const GatherData = async (userData, fromDate, toDate, dashName) => {
         },
       },
     );
-    // console.log(response, 'iuytrdfxcgh');
 
-    return response.data;
+    // Process the nested array response to flatten and structure the data
+    const processedData = processApiResponse(response.data);
+    return processedData;
   } catch (error) {
     console.error('Error during API call', error);
   }
 };
 
+// Process the nested API response into a structured format
+const processApiResponse = (apiData) => {
+  if (!Array.isArray(apiData) || apiData.length === 0) {
+    return [];
+  }
+
+  const processedData = {
+    summary: null,
+    salesSummary: null,
+    suppliers: [],
+    customers: [],
+    products: [],
+  };
+
+  // Process each section of the nested array
+  apiData.forEach((section, index) => {
+    if (!Array.isArray(section) || section.length === 0) {
+      return;
+    }
+
+    const firstItem = section[0];
+
+    // Section 0: General Summary (TotalTrips, TotalQty, AvgQty)
+    if (index === 0 && firstItem.TotalTrips && firstItem.TotalQty && firstItem.AvgQty) {
+      processedData.summary = firstItem;
+    }
+
+    // Section 1: Sales Summary (TotalCashSales, TotalCreditSales, etc.)
+    if (index === 1 && firstItem.TotalCashSales && firstItem.TotalCreditSales) {
+      processedData.salesSummary = firstItem;
+    }
+
+    // Section 2: Suppliers data
+    if (index === 2 && firstItem.SNo && firstItem.Supplier !== undefined) {
+      // Filter out the total row and process supplier data
+      const supplierData = section.filter(item => item.Supplier && item.Supplier !== 'Total');
+      processedData.suppliers = supplierData.map((item, idx) => ({
+        id: idx,
+        ...item,
+      }));
+    }
+
+    // Section 3: Customers data
+    if (index === 3 && firstItem.CustomerName) {
+      processedData.customers = section.map((item, idx) => ({
+        id: idx,
+        ...item,
+      }));
+    }
+
+    // Section 4: Products data
+    if (index === 4 && firstItem.ProductName) {
+      processedData.products = section.map((item, idx) => ({
+        id: idx,
+        ...item,
+      }));
+    }
+  });
+
+  // Create a flattened array for backward compatibility
+  const flattenedData = [];
+  
+  if (processedData.summary) flattenedData.push(processedData.summary);
+  if (processedData.salesSummary) flattenedData.push(processedData.salesSummary);
+  processedData.suppliers.forEach(supplier => flattenedData.push(supplier));
+  processedData.customers.forEach(customer => flattenedData.push(customer));
+  processedData.products.forEach(product => flattenedData.push(product));
+
+  return {
+    ...processedData,
+    flattenedData,
+    rawData: apiData, // Keep original data for debugging
+  };
+};
+
 export const SalesDataProvider = ({children}) => {
-  const [dailyData, setDailyData] = useState([]);
+  const [dailyData, setDailyData] = useState({
+    summary: null,
+    salesSummary: null,
+    suppliers: [],
+    customers: [],
+    products: [],
+    flattenedData: [],
+    rawData: null,
+  });
   const [loading, setLoading] = useState(true);
   const [selectedCompany, setSelectedCompany] = useState(0);
   const [startDate, setStartDate] = useState();
@@ -76,7 +160,7 @@ export const SalesDataProvider = ({children}) => {
   const [startTime, setStartTime] = useState();
   const [endTime, setEndTime] = useState();
   const [userMenus, setUserMenus] = useState([]);
-  const [currentDashboardType, setCurrentDashboardType] = useState(DASHBOARD_TYPES.SALES); // Add current dashboard type
+  const [currentDashboardType, setCurrentDashboardType] = useState(DASHBOARD_TYPES.SALES);
 
   const formatDate = date => {
     return date.toLocaleDateString('en-GB', {
@@ -97,7 +181,7 @@ export const SalesDataProvider = ({children}) => {
     const timezoneOffset = localDate.getTimezoneOffset() * 60000;
     const adjustedDate = new Date(localDate.getTime() - timezoneOffset);
 
-    return adjustedDate; // Return the adjusted date object
+    return adjustedDate;
   };
 
   useEffect(() => {
@@ -107,13 +191,11 @@ export const SalesDataProvider = ({children}) => {
       setEndTime(defaultTime);
 
       const now = new Date();
-
       const localTime = new Date(
         now.getTime() - now.getTimezoneOffset() * 60000,
       );
 
       if (localTime.getHours() < 8) {
-        // Set startDate to yesterday
         const yesterday = new Date(localTime);
         yesterday.setDate(localTime.getDate() - 1);
 
@@ -126,7 +208,6 @@ export const SalesDataProvider = ({children}) => {
         setStartDate(localTime);
         setEndDate(tomorrow);
       }
-      // Set default start and end times
     };
 
     setDate();
@@ -136,7 +217,7 @@ export const SalesDataProvider = ({children}) => {
     const SetCompany = async () => {
       const localCom = await AsyncStorage.getItem('SelectedCompany');
       if (localCom) {
-        setSelectedCompany(JSON.parse(localCom)); // Set to parsed value
+        setSelectedCompany(JSON.parse(localCom));
       } else {
         setSelectedCompany(0);
       }
@@ -152,41 +233,44 @@ export const SalesDataProvider = ({children}) => {
     fetchData();
   };
 
-  // Add function to switch dashboard type
   const switchDashboardType = (dashType) => {
     setCurrentDashboardType(dashType);
-    fetchData(dashType); // Refetch data with new dashboard type
+    fetchData(dashType);
   };
 
   const fetchDataCustom = async (startDatee, endDatee, dashType = currentDashboardType) => {
     try {
       const defaultTime = setDefaultTimeTo8AM(new Date());
-
       setLoading(true);
-      setTimeout(() => {}, 1000);
+      
       const localData = await getStoredData('CompanyDetails');
       const formattedFromDate = combineDateTime(startDatee, defaultTime);
       const formattedToDate = combineDateTime(endDatee, defaultTime);
       const menus = await GetUserMenus(localData[0]);
       setUserMenus(menus[0]);
 
+      let allData;
+
       if (selectedCompany === 0) {
-        const allData = [];
+        allData = [];
         
         for (const obj of localData) {
-          const data = await GatherData(
+          const companyData = await GatherData(
             obj,
             formattedFromDate,
             formattedToDate,
-            dashType // Pass the dashboard type
+            dashType
           );
-          if (data && Array.isArray(data)) {
-            allData.push(...data);
+          
+          if (companyData && companyData.flattenedData) {
+            allData = allData.concat(companyData.flattenedData);
           }
         }
         
-        setDailyData(allData);
-      } else if (selectedCompany !== 0) {
+        // Merge data from multiple companies
+        const mergedData = mergeCompanyData(allData);
+        setDailyData(mergedData);
+      } else {
         const selectedItem = localData.filter(
           val => val.id === selectedCompany,
         );
@@ -195,12 +279,21 @@ export const SalesDataProvider = ({children}) => {
           selectedItem[0],
           formattedFromDate,
           formattedToDate,
-          dashType // Pass the dashboard type
+          dashType
         );
         setDailyData(data);
       }
     } catch (error) {
       console.error('Error fetching stored data:', error);
+      setDailyData({
+        summary: null,
+        salesSummary: null,
+        suppliers: [],
+        customers: [],
+        products: [],
+        flattenedData: [],
+        rawData: null,
+      });
     } finally {
       setTimeout(() => {
         setLoading(false);
@@ -208,33 +301,66 @@ export const SalesDataProvider = ({children}) => {
     }
   };
 
+  // Merge data from multiple companies
+  const mergeCompanyData = (allFlattenedData) => {
+    if (!allFlattenedData || allFlattenedData.length === 0) {
+      return {
+        summary: null,
+        salesSummary: null,
+        suppliers: [],
+        customers: [],
+        products: [],
+        flattenedData: [],
+        rawData: null,
+      };
+    }
+
+    // This is a simplified merge - you might want to implement more sophisticated merging logic
+    // based on your specific requirements
+    const merged = {
+      summary: allFlattenedData.find(item => item.TotalTrips && item.TotalQty && item.AvgQty) || null,
+      salesSummary: allFlattenedData.find(item => item.TotalCashSales && item.TotalCreditSales) || null,
+      suppliers: allFlattenedData.filter(item => item.Supplier && item.TotalQty && item.UOM),
+      customers: allFlattenedData.filter(item => item.CustomerName && item.TotalNetAmount),
+      products: allFlattenedData.filter(item => item.ProductName && item.TotalNetAmount),
+      flattenedData: allFlattenedData,
+      rawData: allFlattenedData,
+    };
+
+    return merged;
+  };
+
   const fetchData = async (dashType = currentDashboardType) => {
     try {
       setLoading(true);
-      setTimeout(() => {}, 1000);
+      
       const localData = await getStoredData('CompanyDetails');
       const formattedFromDate = combineDateTime(startDate, startTime);
       const formattedToDate = combineDateTime(endDate, endTime);
       const menus = await GetUserMenus(localData[0]);
       setUserMenus(menus[0]);
       
+      let allData;
+
       if (selectedCompany === 0) {
-        const allData = [];
+        allData = [];
         
         for (const obj of localData) {
-          const data = await GatherData(
+          const companyData = await GatherData(
             obj,
             formattedFromDate,
             formattedToDate,
-            dashType // Pass the dashboard type
+            dashType
           );
-          if (data && Array.isArray(data)) {
-            allData.push(...data);
+          
+          if (companyData && companyData.flattenedData) {
+            allData = allData.concat(companyData.flattenedData);
           }
         }
         
-        setDailyData(allData);
-      } else if (selectedCompany !== 0) {
+        const mergedData = mergeCompanyData(allData);
+        setDailyData(mergedData);
+      } else {
         const selectedItem = localData.filter(
           val => val.id === selectedCompany,
         );
@@ -243,12 +369,21 @@ export const SalesDataProvider = ({children}) => {
           selectedItem[0],
           formattedFromDate,
           formattedToDate,
-          dashType // Pass the dashboard type
+          dashType
         );
         setDailyData(data);
       }
     } catch (error) {
       console.error('Error fetching stored data:', error);
+      setDailyData({
+        summary: null,
+        salesSummary: null,
+        suppliers: [],
+        customers: [],
+        products: [],
+        flattenedData: [],
+        rawData: null,
+      });
     } finally {
       setTimeout(() => {
         setLoading(false);
@@ -262,27 +397,20 @@ export const SalesDataProvider = ({children}) => {
     const now = new Date();
     const localTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
 
-    // Check if current time is before 08:00 AM
     if (localTime.getHours() < 8) {
-      // Set startDate to yesterday
       const yesterday = new Date(localTime);
       yesterday.setDate(localTime.getDate() - 1);
       fetchDataCustom(yesterday, localTime, dashType);
-      // Set endDate to today
       setStartDate(yesterday);
       setEndDate(localTime);
     } else {
-      // Set startDate to today
       const tomorrow = new Date(localTime);
       tomorrow.setDate(localTime.getDate() + 1);
       fetchDataCustom(localTime, tomorrow, dashType);
-
-      // Set endDate to tomorrow
       setStartDate(localTime);
       setEndDate(tomorrow);
     }
 
-    // Set default start and end times
     setStartTime(defaultTime);
     setEndTime(defaultTime);
   };
@@ -293,9 +421,7 @@ export const SalesDataProvider = ({children}) => {
     const now = new Date();
     const localTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
 
-    // Check if current time is before 08:00 AM
     if (localTime.getHours() < 8) {
-      // Set startDate to two days ago
       const dayBeforeYesterday = new Date(localTime);
       dayBeforeYesterday.setDate(localTime.getDate() - 2);
 
@@ -303,22 +429,17 @@ export const SalesDataProvider = ({children}) => {
       yesterday.setDate(localTime.getDate() - 1);
 
       fetchDataCustom(dayBeforeYesterday, yesterday, dashType);
-      // Set start and end dates
       setStartDate(dayBeforeYesterday);
       setEndDate(yesterday);
     } else {
-      // Set startDate to yesterday
       const yesterday = new Date(localTime);
       yesterday.setDate(localTime.getDate() - 1);
 
       fetchDataCustom(yesterday, localTime, dashType);
-
-      // Set endDate to today
       setStartDate(yesterday);
       setEndDate(localTime);
     }
 
-    // Set default start and end times
     setStartTime(defaultTime);
     setEndTime(defaultTime);
   };
@@ -329,27 +450,18 @@ export const SalesDataProvider = ({children}) => {
     const now = new Date();
     const localTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
 
-    // Determine the day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
     const dayOfWeek = localTime.getDay();
-
-    // Calculate the start of the week (last Sunday at 8:00 AM)
     const startOfWeek = new Date(localTime);
-    startOfWeek.setDate(localTime.getDate() - dayOfWeek); // Set to last Sunday
-    startOfWeek.setHours(8, 0, 0, 0); // Set to 8:00 AM
+    startOfWeek.setDate(localTime.getDate() - dayOfWeek);
+    startOfWeek.setHours(8, 0, 0, 0);
 
-    // Calculate the end of the week (next Sunday at 8:00 AM)
     const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 7); // Move to next Sunday
-    endOfWeek.setHours(8, 0, 0, 0); // Set to 8:00 AM
+    endOfWeek.setDate(startOfWeek.getDate() + 7);
+    endOfWeek.setHours(8, 0, 0, 0);
 
-    // Fetch data for the week
     fetchDataCustom(startOfWeek, endOfWeek, dashType);
-
-    // Set start and end dates to the week's start and end
     setStartDate(startOfWeek);
     setEndDate(endOfWeek);
-
-    // Set default start and end times
     setStartTime(defaultTime);
     setEndTime(defaultTime);
   };
@@ -359,7 +471,6 @@ export const SalesDataProvider = ({children}) => {
 
     const now = new Date();
 
-    // Calculate the start of the month (1st day of the current month at 8:00 AM)
     const startOfMonth = new Date(
       now.getFullYear(),
       now.getMonth(),
@@ -370,7 +481,6 @@ export const SalesDataProvider = ({children}) => {
       0,
     );
 
-    // Calculate the end of the month (1st day of the next month at 8:00 AM)
     const endOfMonth = new Date(
       now.getFullYear(),
       now.getMonth() + 1,
@@ -381,21 +491,33 @@ export const SalesDataProvider = ({children}) => {
       0,
     );
 
-    // Fetch data for the month
     fetchDataCustom(startOfMonth, endOfMonth, dashType);
-
-    // Set start and end dates to the month's start and end
     setStartDate(startOfMonth);
     setEndDate(endOfMonth);
-
-    // Set default start and end times
     setStartTime(defaultTime);
     setEndTime(defaultTime);
   };
 
+  // Helper functions to access structured data
+  const getSummaryData = () => dailyData.summary;
+  const getSalesSummary = () => dailyData.salesSummary;
+  const getSuppliers = () => dailyData.suppliers;
+  const getCustomers = () => dailyData.customers;
+  const getProducts = () => dailyData.products;
+  const getFlattenedData = () => dailyData.flattenedData;
+
   return (
     <SalesDataContext.Provider
       value={{
+        // Structured data access
+        summaryData: getSummaryData(),
+        salesSummary: getSalesSummary(),
+        suppliers: getSuppliers(),
+        customers: getCustomers(),
+        products: getProducts(),
+        flattenedData: getFlattenedData(),
+        
+        // Legacy support
         dailyData,
         loading,
         selectedCompany,
@@ -414,9 +536,9 @@ export const SalesDataProvider = ({children}) => {
         SetWeek,
         SetMonth,
         userMenus,
-        currentDashboardType, // Expose current dashboard type
-        switchDashboardType, // Expose function to switch dashboard type
-        DASHBOARD_TYPES, // Expose dashboard types
+        currentDashboardType,
+        switchDashboardType,
+        DASHBOARD_TYPES,
       }}>
       {children}
     </SalesDataContext.Provider>

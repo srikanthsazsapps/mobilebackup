@@ -277,23 +277,70 @@ const VehiclePopupCard = ({
     );
   };
 
+  // Render functions for Highly Used tab
+  const renderHighlyUsedVehicle = () => {
+    const sortedData = getSortedTripData();
+    return (
+      <View>
+        {sortedData.map((item, index) => (
+          <View key={item.number || index} style={styles.vehicleCard}>
+            <View style={styles.cardRow}>
+              <View style={styles.verticalBar} />
+              <View style={{ flex: 1 }}>
+                <Text style={[GlobalStyle.H7, styles.vehicleNumber]}>
+                  {item.number || `Vehicle ${index + 1}`}
+                </Text>
+                <View style={styles.statsRow}>
+                  <Text style={[GlobalStyle.H88, styles.fcLabel]}>
+                    Trips: <Text style={[GlobalStyle.H88, styles.fcValue]}>{item.tripCount || 0}</Text>
+                  </Text>
+                  <Text style={[GlobalStyle.H88, styles.fcLabel]}>
+                    Amount: <Text style={[GlobalStyle.H88, styles.fcValue]}>{(item.totalAmount || 0).toLocaleString()}</Text>
+                  </Text>
+                </View>
+                {item.driverName && (
+                  <View style={styles.statsRow}>
+                    <Text style={[GlobalStyle.H88, styles.fcLabel]}>
+                      Driver: <Text style={[GlobalStyle.H88, styles.fcValue]}>{item.driverName}</Text>
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  const renderLoaderDataTab = () => {
+    const sortedData = getSortedHoursData();
+    return (
+      <View>
+        {sortedData.map((item, index) => (
+          <LoaderDataCard key={item.number || index} item={item} />
+        ))}
+      </View>
+    );
+  };
+
   const renderExpiryTab = (data, fieldName, period, setPeriod) => {
     const filtered = filterByPeriod(data, fieldName, period);
     return (
       <View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+        <View style={{ marginBottom: 16, flexDirection: 'row', flexWrap: 'wrap' }}>
           {PERIODS.map(p => (
             <TouchableOpacity
               key={p.key}
               onPress={() => setPeriod(p.key)}
-              style={[styles.chip, period === p.key && styles.chipActive]}
+              style={[styles.chip, period === p.key && styles.chipActive, { marginRight: 8, marginBottom: 8 }]}
             >
               <Text style={[GlobalStyle.H88, styles.chipText, period === p.key && styles.chipTextActive]}>
                 {p.label}
               </Text>
             </TouchableOpacity>
           ))}
-        </ScrollView>
+        </View>
         {filtered.length > 0 ? (
           filtered.map((item, idx) => (
             <ExpiryCard key={item.number + idx} item={item} fieldName={fieldName} />
@@ -304,59 +351,6 @@ const VehiclePopupCard = ({
             <Text style={{ color: '#888' }}>No vehicles</Text>
           </View>
         )}
-      </View>
-    );
-  };
-
-  const renderLoaderDataTab = () => {
-    const sortedData = getSortedHoursData();
-    return (
-      <View>
-        {sortedData.length > 0 ? (
-          sortedData.map((item, idx) => (
-            <LoaderDataCard key={item.number + idx} item={item} />
-          ))
-        ) : (
-          <View style={{ alignItems: 'center', padding: 40 }}>
-            <Image source={NoDataImage} style={{ width: 120, height: 120, marginBottom: 16, resizeMode: 'contain' }} />
-            <Text style={{ color: '#888' }}>No loader data available</Text>
-          </View>
-        )}
-      </View>
-    );
-  };
-
-  const renderHighlyUsedVehicle = () => {
-    const sortedData = getSortedTripData();
-    return (
-      <View>
-        {sortedData.map((item, index) => (
-          <View key={index} style={styles.vehicleCard}>
-            <View style={styles.cardRow}>
-              <View style={styles.verticalBar} />
-              <View style={{ flex: 1 }}>
-                <View style={styles.statsRow}>
-                  <Text style={[GlobalStyle.H7, styles.vehicleNumber]}>{item.number}</Text>
-                  <Text style={[GlobalStyle.H7, styles.statMain]}>
-                    {item.tripCount}{' '}
-                    <Text style={[GlobalStyle.H16, styles.statLabel]}>Trips</Text>
-                  </Text>
-                </View>
-                <View style={styles.statsRow}>
-                  <Text style={[GlobalStyle.H7, styles.statMain]}>
-                    {(item.qty ?? 0).toFixed(2)}{' '}
-                    <Text style={[GlobalStyle.H16, styles.statLabel]}>Liter</Text>
-                  </Text>
-                  <Text style={[GlobalStyle.H7, styles.statMain]}>
-                    {item.totalAmount?.toLocaleString()}{' '}
-                    <Text style={[GlobalStyle.H16, styles.statLabel]}>Income</Text>
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
-        ))}
-        <View style={{ height: 80 }} />
       </View>
     );
   };
@@ -436,7 +430,7 @@ const VehiclePopupCard = ({
         <Text style={{ color: '#888', textAlign: 'center' }}>No data available</Text>
       </View>
     );
-  };
+  }; 
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -510,7 +504,9 @@ const VehiclePopupCard = ({
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 16 },
-  popup: { backgroundColor: '#fff', borderRadius: 24, width: width - 32, maxHeight: height * 0.85, overflow: 'hidden' },
+  // popup: { backgroundColor: '#fff', borderRadius: 24, width: width - 32, maxHeight: height * 0.65, overflow: 'hidden' },
+    popup: { backgroundColor: '#fff', borderRadius: 24, width: width - 32, height: "70%", overflow: 'hidden' },
+
   closeBtn: { position: 'absolute', top: 14, right: 14, zIndex: 10, padding: 6, backgroundColor: '#f8f8f8', borderRadius: 20 },
   header: { backgroundColor: '#fff', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20 },
   tabBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, marginRight: 8 },
@@ -521,7 +517,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6, 
     borderRadius: 14, 
     marginRight: 8,
-    position: 'relative'
+    position: 'relative',
+    
   },
   tabText: { marginLeft: 6 },
   content: { padding: 20 },
@@ -563,6 +560,7 @@ const styles = StyleSheet.create({
   },
   totalLabel: { color: '#fff', fontWeight: '600' },
   totalValue: { color: '#fff', fontWeight: '600' },
+  headerTitle: { fontWeight: 'bold', marginBottom: 12 },
   // Filter Dropdown Styles
   filterIconButton: {
     backgroundColor: "#4A90E2",
@@ -603,6 +601,7 @@ const styles = StyleSheet.create({
   dropdownItem: {
     paddingVertical: 12,
     paddingHorizontal: 16,
+    borderBottomWidth: 1,
     borderColor: '#f0f0f0',
   },
   dropdownText: {

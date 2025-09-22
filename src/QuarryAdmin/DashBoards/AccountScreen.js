@@ -11,23 +11,22 @@ import {
   ActivityIndicator,
   RefreshControl,
   Dimensions,
-  Modal,
-  TouchableWithoutFeedback
 } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faArrowLeft, faSort, faSortUp, faSortDown, faRefresh } from '@fortawesome/free-solid-svg-icons';
-import GlobalStyle from "../../components/common/GlobalStyle";
+import { faArrowLeft, faSort } from '@fortawesome/free-solid-svg-icons';
+import GlobalStyle from '../../components/common/GlobalStyle';
 import { scale, verticalScale } from 'react-native-size-matters';
 import { DashesDataContext } from '../../components/common/DashesDataContext';
 import Loading from '../../components/common/Loading';
-import DashesDateFilter from './DashesDataFilter';
+
+const { width, height } = Dimensions.get('window');
 
 // Function to convert string to camelCase
 const toCamelCase = (str) => {
   return str
     .toLowerCase()
     .replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, (match, index) => {
-      if (+match === 0) return "";
+      if (+match === 0) return '';
       return index === 0 ? match.toUpperCase() : match.toUpperCase();
     });
 };
@@ -41,30 +40,20 @@ const formatIndianNumber = (num) => {
   if (otherNumbers !== '') {
     lastThree = ',' + lastThree;
   }
-  const formattedNumber = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree;
+  const formattedNumber = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThree;
   return `${num < 0 ? '-' : ''}${formattedNumber}`;
 };
-
-const { width } = Dimensions.get('window');
 
 const AccountsScreen = ({ navigation }) => {
   const {
     accountsData,
     loadingStates,
     fetchSingleDashboard,
-    fetchCustomDashboard,
     selectedCompany,
-    startDate,
-    endDate,
     setTodayRange,
-    setYesterdayRange,
-    setWeekRange,
-    setMonthRange
   } = useContext(DashesDataContext);
 
-  const [dateTab, setDateTab] = useState('Today');
   const [activeTab, setActiveTab] = useState('Receivables');
-  const [showDateFilterModal, setShowDateFilterModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const [sortOrder, setSortOrder] = useState('alphabetical');
@@ -72,10 +61,19 @@ const AccountsScreen = ({ navigation }) => {
   const spinAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (startDate && endDate) {
-      fetchSingleDashboard('accounts');
-    }
-  }, [selectedCompany, startDate, endDate]);
+    const fetchDailyData = async () => {
+      try {
+        setRefreshing(true);
+        await setTodayRange('accounts');
+        await fetchSingleDashboard('accounts');
+      } catch (error) {
+        console.error('Error fetching daily data:', error);
+      } finally {
+        setRefreshing(false);
+      }
+    };
+    fetchDailyData();
+  }, [selectedCompany]);
 
   const startSpinAnimation = () => {
     spinAnim.setValue(0);
@@ -106,7 +104,7 @@ const AccountsScreen = ({ navigation }) => {
 
   const onManualRefresh = async () => {
     if (isManualRefreshing || refreshing) return;
-    
+
     try {
       setIsManualRefreshing(true);
       startSpinAnimation();
@@ -123,10 +121,10 @@ const AccountsScreen = ({ navigation }) => {
     if (!accountsData || accountsData.length === 0) {
       return { receivablesArray: [], payablesArray: [] };
     }
-    
+
     let receivablesArray = [];
     let payablesArray = [];
-    
+
     if (Array.isArray(accountsData)) {
       if (accountsData[0] && Array.isArray(accountsData[0])) {
         receivablesArray = accountsData[0] || [];
@@ -136,19 +134,16 @@ const AccountsScreen = ({ navigation }) => {
         payablesArray = accountsData;
       }
     }
-    
+
     return { receivablesArray, payablesArray };
   };
 
   const { receivablesArray, payablesArray } = getAccountData();
 
   const receivablesData = receivablesArray
-    .filter(item => {
+    .filter((item) => {
       const amount = parseFloat(item.Balance || 0);
-      return item && 
-             item.Na && 
-             item.Na.trim() !== '' && 
-             amount !== 0;
+      return item && item.Na && item.Na.trim() !== '' && amount !== 0;
     })
     .map((item, index) => {
       const parsedAmount = parseFloat(item.Balance || 0);
@@ -157,17 +152,14 @@ const AccountsScreen = ({ navigation }) => {
         name: toCamelCase(item.Na.toString().trim()),
         amount: parsedAmount,
         Na: item.Na,
-        Balance: formatIndianNumber(parsedAmount)
+        Balance: formatIndianNumber(parsedAmount),
       };
     });
 
   const payablesData = payablesArray
-    .filter(item => {
+    .filter((item) => {
       const amount = parseFloat(item.Balance || 0);
-      return item && 
-             item.Na && 
-             item.Na.trim() !== '' && 
-             amount !== 0;
+      return item && item.Na && item.Na.trim() !== '' && amount !== 0;
     })
     .map((item, index) => {
       const parsedAmount = parseFloat(item.Balance || 0);
@@ -176,13 +168,13 @@ const AccountsScreen = ({ navigation }) => {
         name: toCamelCase(item.Na.toString().trim()),
         amount: parsedAmount,
         Na: item.Na,
-        Balance: formatIndianNumber(parsedAmount)
+        Balance: formatIndianNumber(parsedAmount),
       };
     });
 
   const sortData = (data) => {
     const sortedData = [...data];
-    
+
     switch (sortOrder) {
       case 'highToLow':
         return sortedData.sort((a, b) => {
@@ -215,28 +207,11 @@ const AccountsScreen = ({ navigation }) => {
       const amount = typeof item.amount === 'number' ? item.amount : parseFloat(item.amount || 0);
       return sum + amount;
     }, 0);
-  
+
   const payablesTotal = payablesData.reduce((sum, item) => {
     const amount = typeof item.amount === 'number' ? item.amount : parseFloat(item.amount || 0);
     return sum + amount;
   }, 0);
-
-  const getDateRangeDescription = () => {
-    switch (dateTab) {
-      case 'Today':
-        return '';
-      case 'Yesterday':
-        return '';
-      case 'Week':
-        return '';
-      case 'Month':
-        return '';
-      case '':
-        return '';
-      default:
-        return '';
-    }
-  };
 
   const handleSortPress = () => {
     if (sortOrder === 'alphabetical') {
@@ -249,15 +224,7 @@ const AccountsScreen = ({ navigation }) => {
   };
 
   const getSortIcon = () => {
-    switch (sortOrder) {
-      case 'highToLow':
-        return faSort;
-      case 'lowToHigh':
-        return faSort;
-      case 'alphabetical':
-      default:
-        return faSort;
-    }
+    return faSort; // Simplified, as only one icon is used
   };
 
   const getSortButtonText = () => {
@@ -290,60 +257,13 @@ const AccountsScreen = ({ navigation }) => {
     });
   };
 
-  const handleDateTabPress = async (tab) => {
-    if (refreshing || isManualRefreshing) return;
-    
-    setDateTab(tab);
-    
-    try {
-      if (tab === 'Custom') {
-        setShowDateFilterModal(true);
-      } else {
-        setRefreshing(true);
-        if (tab === 'Today') {
-          await setTodayRange('accounts');
-        } else if (tab === 'Yesterday') {
-          await setYesterdayRange('accounts');
-        } else if (tab === 'Week') {
-          await setWeekRange('accounts');
-        } else if (tab === 'Month') {
-          await setMonthRange('accounts');
-        }
-      }
-    } catch (error) {
-      console.error('Error updating date range:', error);
-    } finally {
-      if (tab !== 'Custom') {
-        setRefreshing(false);
-      }
-    }
-  };
-
-  const handleCustomDateSelect = async (startDateTime, endDateTime) => {
-    try {
-      setRefreshing(true);
-      await fetchCustomDashboard('accounts', startDateTime, endDateTime);
-    } catch (error) {
-      console.error('Error fetching custom date data:', error);
-    } finally {
-      setRefreshing(false);
-      setShowDateFilterModal(false);
-    }
-  };
-
-  const tabs = ['Yesterday', 'Today', 'Week', 'Month', 'Custom'];
-
-  if (loadingStates.accounts) {
-    return <Loading />;
-  }
-
-  if (isManualRefreshing) {
-    return (
-      <View style={styles.Container}>
-        <Loading />
-      </View>
-    );
-  }
+  // if (loadingStates.accounts || isManualRefreshing) {
+  //   return (
+  //     <View style={styles.Container}>
+  //       <Loading />
+  //     </View>
+  //   );
+  // }
 
   const spin = spinAnim.interpolate({
     inputRange: [0, 1],
@@ -352,31 +272,10 @@ const AccountsScreen = ({ navigation }) => {
 
   return (
     <View style={styles.Container}>
-      <Modal
-        visible={showDateFilterModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowDateFilterModal(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setShowDateFilterModal(false)}>
-          <View style={styles.modalContainer}>
-            <TouchableWithoutFeedback>
-              <View style={styles.glassModalContent}>
-                <DashesDateFilter
-                  CloseModel={() => setShowDateFilterModal(false)}
-                  onDateSelected={handleCustomDateSelect}
-                  initialFromDate={startDate}
-                  initialToDate={endDate}
-                />
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-      <View // Fixed from View to ScrollView
+      <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         refreshControl={
-          <RefreshControl 
+          <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
             colors={['#3E89EC']}
@@ -399,47 +298,21 @@ const AccountsScreen = ({ navigation }) => {
                 icon={faArrowLeft}
                 size={22}
                 color="white"
-                style={{ top: 11, right: 12 }}
+                style={{ top: 15, right: 12 }}
               />
             </TouchableOpacity>
             <Text style={[GlobalStyle.H3, styles.headerText]}>Accounts</Text>
           </View>
-          <View style={styles.daycontainer}>
-            {tabs.map((tab, index) => (
-              <React.Fragment key={tab}>
-                <TouchableOpacity
-                  style={[
-                    styles.tab,
-                    dateTab === tab && styles.dateTab,
-                    index === 0 && styles.firstTab,
-                    index === tabs.length - 1 && styles.lastTab,
-                  ]}
-                  onPress={() => handleDateTabPress(tab)}
-                  disabled={refreshing || isManualRefreshing}
-                >
-                  <Text
-                    style={[
-                      styles.tabText,
-                      GlobalStyle.H12,
-                      dateTab === tab && styles.activeTabText,
-                    ]}
-                  >
-                    {tab}
-                  </Text>
-                </TouchableOpacity>
-                {index < tabs.length - 1 && <View style={styles.divider} />}
-              </React.Fragment>
-            ))}
-          </View>
         </View>
         <View style={styles.profitCard}>
           <View style={styles.netProfitRow}>
-            <Text style={[GlobalStyle.H5]}>{getDateRangeDescription()} {activeTab}</Text>
+            <Text style={[GlobalStyle.H5]}>A{activeTab}</Text>
             <Text
               style={[
                 GlobalStyle.heading5,
                 styles.netProfitAmount,
-                (activeTab === 'Receivables' ? receivablesTotal : payablesTotal) < 0 && styles.negativeAmount
+                (activeTab === 'Receivables' ? receivablesTotal : payablesTotal) < 0 &&
+                  styles.negativeAmount,
               ]}
             >
               ₹ {formatIndianNumber(activeTab === 'Receivables' ? receivablesTotal : payablesTotal)}
@@ -457,7 +330,7 @@ const AccountsScreen = ({ navigation }) => {
             <TouchableOpacity
               style={[
                 styles.switchButton,
-                activeTab === 'Receivables' && styles.activeSwitchButton
+                activeTab === 'Receivables' && styles.activeSwitchButton,
               ]}
               onPress={() => handleTabChange('Receivables')}
               disabled={refreshing || isManualRefreshing}
@@ -465,7 +338,7 @@ const AccountsScreen = ({ navigation }) => {
               <Text
                 style={[
                   styles.switchButtonText,
-                  activeTab === 'Receivables' && styles.activeSwitchButtonText
+                  activeTab === 'Receivables' && styles.activeSwitchButtonText,
                 ]}
               >
                 Receivables
@@ -474,7 +347,7 @@ const AccountsScreen = ({ navigation }) => {
             <TouchableOpacity
               style={[
                 styles.switchButton,
-                activeTab === 'Payables' && styles.activeSwitchButton
+                activeTab === 'Payables' && styles.activeSwitchButton,
               ]}
               onPress={() => handleTabChange('Payables')}
               disabled={refreshing || isManualRefreshing}
@@ -482,7 +355,7 @@ const AccountsScreen = ({ navigation }) => {
               <Text
                 style={[
                   styles.switchButtonText,
-                  activeTab === 'Payables' && styles.activeSwitchButtonText
+                  activeTab === 'Payables' && styles.activeSwitchButtonText,
                 ]}
               >
                 Payables
@@ -490,13 +363,15 @@ const AccountsScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
         </View>
-        <Animated.View style={[styles.tableContainer, { opacity: fadeAnim, bottom: 80, paddingBottom: 90 }]}>
+        <Animated.View style={[styles.tableContainer, { opacity: fadeAnim, paddingBottom: 90 }]}>
           <View style={styles.tableHeader}>
-            <Text style={[styles.tableheaderText, GlobalStyle.H7, { flex: 0.3, color: '#444' }]}>S.no</Text>
+            <Text style={[styles.tableheaderText, GlobalStyle.H7, { flex: 0.3, color: '#444' }]}>
+              S.no
+            </Text>
             <Text style={[GlobalStyle.H7, styles.tableheaderText, { flex: 0 }]}>Name</Text>
             <View style={styles.amountHeaderContainer}>
               <Text style={[GlobalStyle.H7, styles.tableheaderText, { flex: 0.5 }]}>Amount</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.sortButton}
                 onPress={handleSortPress}
                 disabled={refreshing || isManualRefreshing}
@@ -510,7 +385,7 @@ const AccountsScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
           </View>
-          <ScrollView style={{ maxHeight: 375 }} nestedScrollEnabled={true}>
+          <ScrollView contentContainerStyle={{ paddingBottom: 250 }} nestedScrollEnabled={true}>
             {refreshing && (
               <View style={styles.refreshingOverlay}>
                 <ActivityIndicator size="large" color="#3E89EC" />
@@ -526,7 +401,7 @@ const AccountsScreen = ({ navigation }) => {
                     style={[
                       styles.tableRow,
                       index % 2 === 0 ? styles.rowOdd : styles.rowEven,
-                      refreshing && styles.refreshingRow
+                      refreshing && styles.refreshingRow,
                     ]}
                   >
                     <Text style={[GlobalStyle.H7, styles.cellText, { flex: 0.4 }]}>{item.id}</Text>
@@ -537,7 +412,7 @@ const AccountsScreen = ({ navigation }) => {
                         styles.cellText,
                         styles.amountText,
                         { flex: 0.7 },
-                        isNegative && styles.negativeAmount
+                        isNegative && styles.negativeAmount,
                       ]}
                     >
                       ₹{item.Balance}
@@ -557,7 +432,7 @@ const AccountsScreen = ({ navigation }) => {
             )}
           </ScrollView>
         </Animated.View>
-      </View>
+      </ScrollView>
     </View>
   );
 };
@@ -657,7 +532,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    bottom: 80,
+    bottom: 100,
   },
   netProfitRow: {
     marginBottom: 5,
@@ -681,6 +556,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 1,
     alignSelf: 'center',
+    marginTop:8
   },
   switchButton: {
     flex: 1,
@@ -705,7 +581,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.99)',
     borderRadius: 16,
     marginHorizontal: 16,
-    marginTop: 20,
+    bottom: 80,
+    height:height,
   },
   tableHeader: {
     flexDirection: 'row',

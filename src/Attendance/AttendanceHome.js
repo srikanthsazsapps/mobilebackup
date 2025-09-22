@@ -39,15 +39,15 @@ const getGreetingMessage = () => {
 
 const determineShift = () => {
   const currentHour = new Date().getHours();
-  return currentHour >= 18 || currentHour < 6 ? 'Night' : 'Day';
+  return currentHour >= 19 || currentHour < 7 ? 'Night' : 'Day';
 };
 
 const getCurrentShiftText = () => {
   const currentHour = new Date().getHours();
-  if (currentHour >= 6 && currentHour < 18) {
-    return { shiftText: 'Day shift 8 AM to 8 PM' };
+  if (currentHour >= 7 && currentHour < 19) {
+    return { shiftText: 'Day shift 7 AM to 7 PM' };
   } else {
-    return { shiftText: 'Night shift 8 PM to 8 AM' };
+    return { shiftText: 'Night shift 7 PM to 7 AM' };
   }
 };
 
@@ -58,9 +58,9 @@ const isEarlyCheckout = (checkInTimestamp, shift) => {
   const expectedCheckoutTime = new Date(checkInTime.getTime() + shiftDuration);
   
   if (shift === 'Day') {
-    expectedCheckoutTime.setHours(20, 0, 0, 0); // 8 PM
+    expectedCheckoutTime.setHours(19, 0, 0, 0); // 8 PM
   } else {
-    expectedCheckoutTime.setHours(8, 0, 0, 0); // 8 AM next day
+    expectedCheckoutTime.setHours(7, 0, 0, 0); // 8 AM next day
     if (now > expectedCheckoutTime) expectedCheckoutTime.setDate(expectedCheckoutTime.getDate() + 1);
   }
   
@@ -102,7 +102,7 @@ const AttendanceHome = ({ route }) => {
   const [isCheckInEnabled, setIsCheckInEnabled] = useState(true); // New state for check-in button
   const [lastCheckInDate, setLastCheckInDate] = useState(null); // Track last check-in date
   const currentHour = new Date().getHours();
-  const isDaytime = currentHour >= 6 && currentHour < 18;
+  const isDaytime = currentHour >= 7 && currentHour < 19;
   const imageSource = isDaytime ? require('../images/MorningSun.png') : require('../images/Evening.png');
   const imageStyle = isDaytime ? styles.mrngPhoto : styles.eveningPhoto;
   const slideAnim = useRef(new Animated.Value(300)).current;

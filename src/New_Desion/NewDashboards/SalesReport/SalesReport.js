@@ -1,3 +1,4 @@
+
 import React, { useRef, useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ImageBackground, TouchableOpacity, ScrollView, TextInput, Image } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
@@ -6,20 +7,23 @@ import Animated, {
   useAnimatedGestureHandler, 
   useAnimatedStyle, 
   withSpring,
+  interpolate,
   runOnJS 
 } from 'react-native-reanimated';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import {faArrowLeft, faSearch, faClock } from '@fortawesome/free-solid-svg-icons';
+import {faArrowLeft, faSearch, faClock, faMoneyBill, faCreditCard, faTruck, faBox } from '@fortawesome/free-solid-svg-icons';
 import GlobalStyle from '../../../components/common/GlobalStyle';
 import { useNavigation } from '@react-navigation/native';
 
 // Import the TopCards component
-import TopCards from './TopCards'; // Adjust path as needed
+import TopCards from './TopCards';
 
 const SalesReport = () => {
   const translateY = useSharedValue(0);
+  const topCardsOpacity = useSharedValue(1);
+  const expandedOpacity = useSharedValue(0);
   const [activeTab, setActiveTab] = useState('cashSales');
-  const [isMenuVisible, setIsMenuVisible] = useState(false); // Added missing state
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
   const navigation = useNavigation();
 
   // Data arrays for mapping
@@ -61,7 +65,7 @@ const SalesReport = () => {
       amount: 440789
     },
      { 
-      id: 3, 
+      id: 4, 
       name: '20 MM', 
       time: '02.33.P.M', 
       tons: 400, 
@@ -69,7 +73,7 @@ const SalesReport = () => {
       amount: 440789
     },
      { 
-      id: 3, 
+      id: 5, 
       name: '20 MM', 
       time: '02.33.P.M', 
       tons: 400, 
@@ -77,7 +81,7 @@ const SalesReport = () => {
       amount: 440789
     },
      { 
-      id: 3, 
+      id: 6, 
       name: '20 MM', 
       time: '02.33.P.M', 
       tons: 400, 
@@ -85,7 +89,7 @@ const SalesReport = () => {
       amount: 440789
     },
      { 
-      id: 3, 
+      id: 7, 
       name: '20 MM', 
       time: '02.33.P.M', 
       tons: 400, 
@@ -93,7 +97,7 @@ const SalesReport = () => {
       amount: 440789
     },
      { 
-      id: 3, 
+      id: 8, 
       name: '20 MM', 
       time: '02.33.P.M', 
       tons: 400, 
@@ -101,7 +105,7 @@ const SalesReport = () => {
       amount: 440789
     },
      { 
-      id: 3, 
+      id: 9, 
       name: '20 MM', 
       time: '02.33.P.M', 
       tons: 400, 
@@ -109,7 +113,7 @@ const SalesReport = () => {
       amount: 440789
     },
      { 
-      id: 3, 
+      id: 10, 
       name: '20 MM', 
       time: '02.33.P.M', 
       tons: 400, 
@@ -117,7 +121,7 @@ const SalesReport = () => {
       amount: 440789
     },
     { 
-      id: 4, 
+      id: 11, 
       name: 'M.Sand', 
       time: '08.40.A.M', 
       tons: 200, 
@@ -125,7 +129,7 @@ const SalesReport = () => {
       amount: 200000
     },
     { 
-      id: 5, 
+      id: 12, 
       name: 'P.Sand', 
       time: '10.20.A.M', 
       tons: 300, 
@@ -172,42 +176,74 @@ const SalesReport = () => {
       context.startY = translateY.value;
     },
     onActive: (event, context) => {
-      // Allow movement in both directions but constrain the limits
       const newTranslateY = context.startY + event.translationY;
       
-      // Set boundaries: allow dragging down to 0 and up to -200 (more expanded)
       if (newTranslateY <= 0 && newTranslateY >= -200) {
         translateY.value = newTranslateY;
+        
+        // Animate TopCards opacity based on sheet position
+        topCardsOpacity.value = interpolate(newTranslateY, [0, -110], [1, 0], 'clamp');
+        expandedOpacity.value = interpolate(newTranslateY, [0, -110], [0, 1], 'clamp');
       }
     },
     onEnd: (event) => {
       const velocity = event.velocityY;
       
-      // Determine final position based on current position and velocity
       if (translateY.value > -50) {
-        // If sheet is mostly collapsed, snap to collapsed state
+        // Collapse - fade in TopCards
         translateY.value = withSpring(0, {
           damping: 15,
           stiffness: 100
         });
+        topCardsOpacity.value = withSpring(1, {
+          damping: 15,
+          stiffness: 100
+        });
+        expandedOpacity.value = withSpring(0, {
+          damping: 15,
+          stiffness: 100
+        });
       } else if (translateY.value <= -50 && translateY.value > -100) {
-        // If sheet is in middle, decide based on velocity
         if (velocity > 500) {
-          // Fast downward swipe - collapse
+          // Collapse - fade in TopCards
           translateY.value = withSpring(0, {
             damping: 15,
             stiffness: 100
           });
+          topCardsOpacity.value = withSpring(1, {
+            damping: 15,
+            stiffness: 100
+          });
+          expandedOpacity.value = withSpring(0, {
+            damping: 15,
+            stiffness: 100
+          });
         } else {
-          // Slow or upward movement - expand
-          translateY.value = withSpring(-110, {
+          // Expand - fade out TopCards
+          translateY.value = withSpring(-130, {
+            damping: 15,
+            stiffness: 100
+          });
+          topCardsOpacity.value = withSpring(0, {
+            damping: 15,
+            stiffness: 100
+          });
+          expandedOpacity.value = withSpring(1, {
             damping: 15,
             stiffness: 100
           });
         }
       } else {
-        // If sheet is mostly expanded, snap to expanded state
-        translateY.value = withSpring(-110, {
+        // Expand - fade out TopCards
+        translateY.value = withSpring(-130, {
+          damping: 15,
+          stiffness: 100
+        });
+        topCardsOpacity.value = withSpring(0, {
+          damping: 15,
+          stiffness: 100
+        });
+        expandedOpacity.value = withSpring(1, {
           damping: 15,
           stiffness: 100
         });
@@ -218,6 +254,18 @@ const SalesReport = () => {
   const animatedStyle = useAnimatedStyle(() => {
     return {
       transform: [{ translateY: translateY.value }],
+    };
+  });
+
+  const topCardsAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: topCardsOpacity.value,
+    };
+  });
+
+  const expandedAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: expandedOpacity.value,
     };
   });
 
@@ -296,6 +344,90 @@ const SalesReport = () => {
     </View>
   );
 
+  const renderExpandedCards = () => {
+    const metricsDataExpanded = [
+      {
+        id: 1,
+        value: '2,00,000',
+        label: 'Cash Sales',
+        icon: faMoneyBill
+      },
+      {
+        id: 2,
+        value: '1,04,000',
+        label: 'Credit Sales',
+        icon: faCreditCard
+      },
+      {
+        id: 3,
+        value: '40',
+        label: 'Total Trip',
+        icon: faTruck
+      },
+      {
+        id: 4,
+        value: '400',
+        label: 'Total Metric TON',
+        icon: faBox
+      }
+    ];
+
+    return (
+      <View style={styles.expandedContainer}>
+        <ScrollView style={styles.expandedScrollContainer} showsVerticalScrollIndicator={false}>
+          <View style={styles.metricsCardContainer}>
+            <View style={styles.metricsRow}>
+              {metricsDataExpanded.slice(0, 2).map((metric, index) => (
+                <View key={metric.id} style={styles.metricItem}>
+                  <View style={styles.metricsCard}>
+                    <View style={styles.metricCardContent}>
+                      <View style={styles.metricContent}>
+                        <Text style={styles.metricLabel}>{metric.label}</Text>
+                        <Text style={styles.metricValue}>{metric.value}</Text>
+                      </View>
+                      <View style={styles.metricIconContainer}>
+                        <FontAwesomeIcon
+                          icon={metric.icon}
+                          size={20}
+                          color="#4A90E2"
+                        />
+                      </View>
+                    </View>
+                  </View>
+                  {index < 1 && <View style={styles.metricDivider} />}
+                </View>
+              ))}
+            </View>
+          </View>
+          <View style={[styles.metricsCardContainer, { marginTop: 0, }]}>
+            <View style={styles.metricsRow}>
+              {metricsDataExpanded.slice(2, 4).map((metric, index) => (
+                <View key={metric.id} style={styles.metricItem}>
+                  <View style={styles.metricsCard}>
+                    <View style={styles.metricCardContent}>
+                      <View style={styles.metricContent}>
+                        <Text style={styles.metricLabel}>{metric.label}</Text>
+                        <Text style={styles.metricValue}>{metric.value}</Text>
+                      </View>
+                      <View style={styles.metricIconContainer}>
+                        <FontAwesomeIcon
+                          icon={metric.icon}
+                          size={20}
+                          color="#4A90E2"
+                        />
+                      </View>
+                    </View>
+                  </View>
+                  {index < 1 && <View style={styles.metricDivider} />}
+                </View>
+              ))}
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ImageBackground 
@@ -315,8 +447,15 @@ const SalesReport = () => {
           </TouchableOpacity>
         </View>
         
-        {/* TopCards component OUTSIDE the gesture container */}
-        <TopCards />
+        {/* Collapsed TopCards - Clean fade only */}
+        <Animated.View style={[styles.topCardsContainer, topCardsAnimatedStyle]}>
+          <TopCards />
+        </Animated.View>
+
+        {/* Expanded four cards - Clean fade in */}
+        <Animated.View style={[styles.topCardsContainer, expandedAnimatedStyle]}>
+          {renderExpandedCards()}
+        </Animated.View>
         
         <Animated.View style={[styles.vehicleWrapper, animatedStyle]}>
           <PanGestureHandler onGestureEvent={gestureHandler}>
@@ -372,7 +511,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15, 
     marginTop: 30,
     paddingTop: 60,
-    zIndex: 10, // Ensure header stays above bottom sheet
+    zIndex: 10,
   },
   leftsection: { 
     flexDirection: 'row', 
@@ -392,6 +531,15 @@ const styles = StyleSheet.create({
     fontSize: 12, 
     fontWeight: '500' 
   },
+  // TopCards container - Clean fade only
+  topCardsContainer: {
+    position: 'absolute',
+    top: 120,
+    left: 0,
+    right: 0,
+    zIndex: 3,
+    // No elevation here to prevent shadow issues during fade
+  },
   vehicleWrapper: { 
     backgroundColor: '#fff', 
     padding: 10, 
@@ -409,7 +557,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    top: 470, // Initial collapsed position
+    top: 470,
     height: '100%',
     zIndex: 5,
   },
@@ -417,18 +565,15 @@ const styles = StyleSheet.create({
     paddingVertical: 16, 
     paddingHorizontal: 4, 
     alignItems: 'center',
-    // Make the drag area more prominent and touchable
     minHeight: 50,
     backgroundColor: 'transparent',
   },
   dragHandle: { 
     width: 40, 
     height: 4, 
-    backgroundColor: '#ddd', 
+    backgroundColor: '#999', 
     borderRadius: 2, 
     marginBottom: 12,
-    // Make it more visible and touchable
-    backgroundColor: '#999',
   },
   tabContainer: {
     flexDirection: 'row',
@@ -459,6 +604,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     paddingHorizontal: 16,
+    
   },
   detailsContainer: {
     flex: 1,
@@ -472,7 +618,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: '#333',
   },
-  // Icon styles
   imageIcon: {
     width: 12,
     height: 12,
@@ -513,7 +658,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  // Search container styles
   searchContainer: {
     backgroundColor: '#f5f5f5',
     borderRadius: 25,
@@ -603,6 +747,75 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     color: '#333',
+  },
+  // Copied styles for expanded cards (metrics)
+  expandedContainer: {
+    flex: 1,
+  },
+  expandedScrollContainer: {
+    flex: 1,
+    height: '100%',
+  },
+  metricsCardContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 20,
+  },
+  metricsCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    flex: 1,
+    marginHorizontal: 4,
+    top:20,
+    bottom: 0, // Adjusted for expanded view (no overlap needed)
+  },
+  metricCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 15,
+    height: '100%',
+  },
+  metricsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+  },
+  metricItem: {
+    flex: 1,
+    position: 'relative',
+  },
+  metricContent: {
+    alignItems: 'flex-start',
+    flex: 1,
+  },
+  metricLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: -4,
+    zIndex: 2,
+  },
+  metricValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  metricIconContainer: {
+    width: 38,
+    height: 38,
+    borderRadius: 24,
+    backgroundColor: '#f0f7ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 0,
+  },
+  metricDivider: {
+    position: 'absolute',
+    right: 0,
+    width: 1,
+    height: '60%',
+    top: '20%',
+    zIndex: 1,
   },
 });
 

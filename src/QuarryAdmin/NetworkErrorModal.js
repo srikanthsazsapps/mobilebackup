@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   errorText: {
-    color: 'red',
+    color: '#C16161',
     textAlign: 'center',
     marginTop: 15,
   },

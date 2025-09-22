@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Text, TouchableWithoutFeedback, KeyboardAvoidingView, Dimensions, StyleSheet, TouchableOpacity, TextInput, Modal, Linking, ScrollView, ImageBackground, View, Image, Alert, Platform, PermissionsAndroid, BackHandler, Keyboard, } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faEllipsis, faPhone, faEnvelope, faGlobe, faEyeSlash, faEye, faAddressBook, faPencil, faFingerprint, } from '@fortawesome/free-solid-svg-icons';
+import { faEllipsis,faUser, faPhone, faEnvelope, faGlobe, faEyeSlash, faEye, faAddressBook, faPencil, faFingerprint, } from '@fortawesome/free-solid-svg-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import GlobalStyle from '../components/common/GlobalStyle';
 import { useNavigation } from '@react-navigation/native';
@@ -328,7 +328,7 @@ const SettingsPage = (route) => {
             />
           ) : (
             <Image
-              source={require('../images/2.jpg')}
+              source={require('../images/add-user.png')}
               style={styles.profileImage}
             />
           )}

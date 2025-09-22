@@ -425,7 +425,7 @@ const ProfitLossDashboard = () => {
             style={[
               GlobalStyle.heading5,
               styles.netProfitAmount,
-              { color: netProfit >= 0 ? '#2ECC71' : '#E74C3C' },
+              { color: netProfit >= 0 ? '#7AB134' : '#C16161' },
             ]}
           >
             ₹ {netProfit.toLocaleString('en-IN')}
@@ -577,8 +577,8 @@ const ProfitLossDashboard = () => {
                 </Text>
                 <Text style={styles.pieChartValueText}>
                   ₹{total.toLocaleString('en-IN', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
+                    // minimumFractionDigits: 2,
+                    // maximumFractionDigits: 2,
                   })}
                 </Text>
               </Animated.View>
@@ -777,7 +777,7 @@ const styles = StyleSheet.create({
   circleText: {
     textAlign: 'center',
     alignSelf: 'center',
-    left: 10,
+    // left: 10,
     bottom: 8,
   },
   profitCard: {
@@ -871,12 +871,12 @@ const styles = StyleSheet.create({
     marginTop: -5,
     textAlign: 'center',
     alignSelf: 'center',
-    left: 10,
+    // left: 10,
   },
   listItemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 8,
+    marginVertical: -10,
     justifyContent: 'space-between',
     padding: 50,
     marginTop: -55,

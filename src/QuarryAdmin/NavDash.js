@@ -10,7 +10,7 @@ import {
   BackHandler,
   Alert,
   Animated,
-  TextInput, 
+  TextInput,
   ScrollView,
 } from 'react-native';
 import CompanyList from '../components/Picker';
@@ -25,7 +25,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { Card } from 'react-native-paper';
 import ButtonList from './navbuttons';
 import TopDrawer from './NotificationDrawer';
-
+import GlobalStyle from '../components/common/GlobalStyle';
 const { width, height } = Dimensions.get('window');
 
 const Dash = ({ navigation }) => {
@@ -48,46 +48,46 @@ const Dash = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchActive, setIsSearchActive] = useState(false);
   const scrollViewRef = useRef(null);
-  
+
   // Animation values
   const scrollY = useRef(new Animated.Value(0)).current;
   const searchInputRef = useRef(null);
-  
+
   // Define header animation constants
   const headerMaxHeight = 241;
   const headerMinHeight = 100;
-  
+
   // Header height animation
-  const headerHeight = isSearchActive 
-    ? headerMinHeight 
+  const headerHeight = isSearchActive
+    ? headerMinHeight
     : scrollY.interpolate({
-        inputRange: [0, headerMaxHeight - headerMinHeight],
-        outputRange: [headerMaxHeight, headerMinHeight],
-        extrapolate: 'clamp',
-      });
-  
+      inputRange: [0, headerMaxHeight - headerMinHeight],
+      outputRange: [headerMaxHeight, headerMinHeight],
+      extrapolate: 'clamp',
+    });
+
   // Header image scale and opacity animations
   const headerImageScale = scrollY.interpolate({
     inputRange: [0, 70],
     outputRange: [1, 0.5],
     extrapolate: 'clamp',
   });
-  
-  const headerImageOpacity = isSearchActive 
-    ? 0 
+
+  const headerImageOpacity = isSearchActive
+    ? 0
     : scrollY.interpolate({
-        inputRange: [0, 70],
-        outputRange: [1, 0],
-        extrapolate: 'clamp',
-      });
-  
+      inputRange: [0, 70],
+      outputRange: [1, 0],
+      extrapolate: 'clamp',
+    });
+
   // GradientCard opacity animation - fade out when scrolling
   const gradientCardOpacity = scrollY.interpolate({
     inputRange: [0, 40],
     outputRange: [1, 0],
     extrapolate: 'clamp',
   });
-  
+
   // Search box position animation
   const searchBoxTop = scrollY.interpolate({
     inputRange: [0, headerMaxHeight - headerMinHeight],
@@ -106,9 +106,9 @@ const Dash = ({ navigation }) => {
     return formattedValue;
   };
 
-const OverallSummary =
-  dailyData && dailyData?.length > 0
-    ? [
+  const OverallSummary =
+    dailyData && dailyData?.length > 0
+      ? [
         {
           ...dailyData[1][0],
           TotalMTandTrips:
@@ -131,7 +131,7 @@ const OverallSummary =
             (dailyData[1][0].TotalCreditCount || 0).toString(),
         },
       ]
-    : [];
+      : [];
 
 
   const updatedData = OverallSummary.map(
@@ -186,8 +186,8 @@ const OverallSummary =
     try {
       await fetchData(
         activeTab === 'Today' ? SetToday :
-        activeTab === 'YesterDay' ? SetYesterday :
-        activeTab === 'Week' ? SetWeek : SetMonth
+          activeTab === 'YesterDay' ? SetYesterday :
+            activeTab === 'Week' ? SetWeek : SetMonth
       );
       setError(null);
       resetToInitialState();
@@ -204,9 +204,9 @@ const OverallSummary =
     setRefreshing(true);
     fetchData(
       tab === 'Today' ? SetToday :
-      tab === 'YesterDay' ? SetYesterday :
-      tab === 'Week' ? SetWeek :
-      tab === 'Month' ? SetMonth : null
+        tab === 'YesterDay' ? SetYesterday :
+          tab === 'Week' ? SetWeek :
+            tab === 'Month' ? SetMonth : null
     ).finally(() => setRefreshing(false));
   };
 
@@ -264,8 +264,8 @@ const OverallSummary =
   );
 
   // Adjust content padding when search is active
-  const contentPaddingTop = isSearchActive 
-    ? headerMinHeight + 60 
+  const contentPaddingTop = isSearchActive
+    ? headerMinHeight + 60
     : headerMaxHeight + 60;
 
   if ((loading && !refreshing) || refreshing) {
@@ -354,123 +354,120 @@ const OverallSummary =
                     activeTab === 'YesterDay' && styles.activeTab,
                   ]}
                   onPress={() => handleTabChange('YesterDay')}>
-                  <Text
-                    style={
-                      activeTab === 'YesterDay'
-                        ? styles.activeTabText
-                        : styles.FilterButtonText
-                    }>
-                    Yesterday
-                  </Text>
+                  <Text style={[
+  activeTab === 'YesterDay' ? GlobalStyle.H10 : styles.FilterButtonText,
+  activeTab === 'YesterDay' && styles.activeTabText
+]}>
+  Yesterday
+</Text>
                 </TouchableOpacity>
 
+                {/* Other buttons - With left border */}
                 <TouchableOpacity
                   style={[
                     styles.FilterButtons,
                     activeTab === 'Today' && styles.activeTab,
+                    styles.leftBorder  // Add left border style
                   ]}
                   onPress={() => handleTabChange('Today')}>
-                  <Text
-                    style={
-                      activeTab === 'Today'
-                        ? styles.activeTabText
-                        : styles.FilterButtonText
-                    }>
-                    Today
-                  </Text>
+                  <Text style={[
+  activeTab === 'Today' ? GlobalStyle.H10 : styles.FilterButtonText,
+  activeTab === 'Today' && styles.activeTabText
+]}>
+  Today
+</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[
                     styles.FilterButtons,
                     activeTab === 'Week' && styles.activeTab,
+                    styles.leftBorder
                   ]}
                   onPress={() => handleTabChange('Week')}>
-                  <Text
-                    style={
-                      activeTab === 'Week'
-                        ? styles.activeTabText
-                        : styles.FilterButtonText
-                    }>
-                    Week
-                  </Text>
+                  <Text style={[
+  activeTab === 'Week' ? GlobalStyle.H10 : styles.FilterButtonText,
+  activeTab === 'Week' && styles.activeTabText
+]}>
+  Week
+</Text>
                 </TouchableOpacity>
+
                 <TouchableOpacity
                   style={[
                     styles.FilterButtons,
                     activeTab === 'Month' && styles.activeTab,
+                    styles.leftBorder
                   ]}
                   onPress={() => handleTabChange('Month')}>
-                  <Text
-                    style={
-                      activeTab === 'Month'
-                        ? styles.activeTabText
-                        : styles.FilterButtonText
-                    }>
-                    Month
-                  </Text>
+                  <Text style={[
+  activeTab === 'Month' ? GlobalStyle.H10 : styles.FilterButtonText,
+  activeTab === 'Month' && styles.activeTabText
+]}>
+  Month
+</Text>
                 </TouchableOpacity>
+
                 <TouchableOpacity
                   style={[
                     styles.FilterButtons,
                     activeTab === 'Custom' && styles.activeTab,
+                    styles.leftBorder
                   ]}
                   onPress={() => {
                     setActiveTab('Custom');
                     setCustomModalVisible(true);
                   }}>
-                  <Text
-                    style={
-                      activeTab === 'Custom'
-                        ? styles.activeTabText
-                        : styles.FilterButtonText
-                    }>
-                    Custom
-                  </Text>
+                  <Text style={[
+  activeTab === 'Custom' ? GlobalStyle.H10 : styles.FilterButtonText,
+  activeTab === 'Custom' && styles.activeTabText
+]}>
+  Custom
+</Text>
                 </TouchableOpacity>
               </View>
             </Animated.View>
           )}
 
           {/* Summary Cards - Only visible when not searching */}
-         {!isSearchActive && (
-  <Animated.View
-    style={[
-      styles.cardContainer,
-      { opacity: headerImageOpacity }
-    ]}
-  >
-    <LinearGradient
-      colors={['#ffffff', '#e0e0e0']}
-      style={styles.gradientcard}>
-      <Card.Content>
-        <Text style={styles.cardTitle}>
-          {updatedData[0]?.TotalCashSalesWithTrips
-            ? FormatNumber(updatedData[0].TotalCashSalesWithTrips.split(' - ')[0]) + 
-              ' - ' + 
-              updatedData[0].TotalCashSalesWithTrips.split(' - ')[1] + ''
-            : '₹ 0 - 0'}
-        </Text>
-        <Text style={styles.cardSubtitle}>Cash Sales</Text>
-      </Card.Content>
-    </LinearGradient>
+          {!isSearchActive && (
+            <Animated.View
+              style={[
+                styles.cardContainer,
+                { opacity: headerImageOpacity }
+              ]}
+            >
+              <LinearGradient
+                colors={['#ffffff', '#e0e0e0']}
+                style={styles.gradientcard}>
+                <Card.Content>
+                  <Text style={styles.cardTitle}>
+                    {updatedData[0]?.TotalCashSalesWithTrips
+                      ? FormatNumber(updatedData[0].TotalCashSalesWithTrips.split(' - ')[0]) +
+                      ' - ' +
+                      updatedData[0].TotalCashSalesWithTrips.split(' - ')[1] + ''
+                      : '₹ 0 - 0'}
+                  </Text>
+                  <Text style={styles.cardSubtitle}>Cash Sales</Text>
+                </Card.Content>
+              </LinearGradient>
 
-    <LinearGradient
-      colors={['#ffffff', '#e0e0e0']}
-      style={styles.gradientcard}>
-      <Card.Content>
-        <Text style={styles.cardTitle}>
-          {updatedData[0]?.TotalCreditSalesWithTrips
-            ? FormatNumber(updatedData[0].TotalCreditSalesWithTrips.split(' - ')[0]) + 
-              ' - ' + 
-              updatedData[0].TotalCreditSalesWithTrips.split(' - ')[1] + ''
-            : '₹ 0 - 0 '}
-        </Text>
-        <Text style={styles.cardSubtitle}>Credit Sales</Text>
-      </Card.Content>
-    </LinearGradient>
-  </Animated.View>
-)}
+              <LinearGradient
+                colors={['#ffffff', '#e0e0e0']}
+                style={styles.gradientcard}>
+                <Card.Content>
+                  <Text style={styles.cardTitle}>
+                    {updatedData[0]?.TotalCreditSalesWithTrips
+                      ? FormatNumber(updatedData[0].TotalCreditSalesWithTrips.split(' - ')[0]) +
+                      ' - ' +
+                      updatedData[0].TotalCreditSalesWithTrips.split(' - ')[1] + ''
+                      : '₹ 0 - 0 '}
+                  </Text>
+                  <Text style={styles.cardSubtitle}>Credit Sales</Text>
+                </Card.Content>
+              </LinearGradient>
+            </Animated.View>
+          )}
         </View>
       </Animated.View>
 
@@ -478,7 +475,7 @@ const OverallSummary =
       <Animated.ScrollView
         ref={scrollViewRef}
         style={styles.scrollView}
-        contentContainerStyle={{ 
+        contentContainerStyle={{
           paddingTop: contentPaddingTop,
           paddingBottom: 20
         }}
@@ -492,9 +489,9 @@ const OverallSummary =
         }
       >
         {/* gradientCard section - visible by default, fades out on scroll */}
-        <Animated.View 
+        <Animated.View
           style={[
-            styles.cardContainer, 
+            styles.cardContainer,
             { paddingHorizontal: 20, opacity: gradientCardOpacity }
           ]}
         >
@@ -614,7 +611,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderRadius: 5,
     justifyContent: 'space-around',
-    marginTop: 10,
+    marginTop: 5,
     marginBottom: 10,
     borderColor: 'white',
     borderWidth: 1,
@@ -625,6 +622,8 @@ const styles = StyleSheet.create({
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  leftBorder: {
     borderLeftWidth: 1,
     borderColor: 'white',
   },
@@ -635,13 +634,13 @@ const styles = StyleSheet.create({
   },
   FilterButtonText: {
     color: 'white',
-    fontSize: 12,
-    fontWeight: '700',
+    // // fontSize: 12,
+    // fontWeight: '700',
   },
   activeTabText: {
     color: 'black',
-    fontSize: 12,
-    fontWeight: '700',
+    // fontSize: 12,
+    // fontWeight: '700',
   },
   cardContainer: {
     flexDirection: 'row',
@@ -653,8 +652,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 5,
     height: 90,
-    bottom:65,
-    left:1,
+    bottom: 65,
+    left: 1,
     justifyContent: 'center',
   },
   gradientcard: {
@@ -662,7 +661,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 5,
     height: 90,
-    bottom:10,
+    bottom: 10,
     justifyContent: 'center',
   },
   cardTitle: {
@@ -690,7 +689,7 @@ const styles = StyleSheet.create({
   dashboardListContainer: {
     paddingHorizontal: 20,
     paddingTop: 10,
-    marginBottom:100,
+    marginBottom: 100,
   },
   navTitle: {
     fontSize: 18,

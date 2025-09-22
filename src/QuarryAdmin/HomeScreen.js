@@ -395,7 +395,7 @@ const HomeScreen = () => {
               />
               <TextInput
                 ref={searchInputRef}
-                style={styles.searchInput}
+                style={[GlobalStyle.H13,styles.searchInput]}
                 placeholder="Search..."
                 placeholderTextColor="#999"
                 value={searchQuery}
@@ -582,16 +582,15 @@ const styles = StyleSheet.create({
   searchIcon: {
     marginRight: 10,
   },
-  searchInput: {
+ searchInput: {
     flex: 1,
-    fontSize: 16,
-    color: 'black',
-    paddingHorizontal: 5,
-    paddingVertical: 8,
-    textAlignVertical: 'center',
-    includeFontPadding: false, 
-    top:10,
-  },
+    paddingHorizontal: 10,
+    paddingVertical: 0,
+    textAlign: 'left',              
+    textAlignVertical: 'center',    
+    includeFontPadding: false,
+    right:10,
+},
   imageStyle: {
     width: 232,
     height: 208,

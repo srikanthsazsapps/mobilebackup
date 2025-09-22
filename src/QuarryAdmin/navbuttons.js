@@ -24,11 +24,13 @@ const ButtonList = () => {
   const navigation = useNavigation();
   const buttons = [
     { text: 'Accounts', icon: faComment,nav :"AccountScreen" },
-     { text: 'Asset', icon: faTruckMoving ,nav :"AssetDashboard"},
+    //  { text: 'Asset', icon: faTruckMoving ,nav :"AssetDashboard"},
+    //  { text: 'Audit', icon: faInfoCircle ,nav :"AuditDashboard"},
     { text: 'Profit & Loss', icon: faChartPie ,nav :"ProfitLossDashboard" },
-    // { text: 'Production', icon: faBoxesPacking,nav :"ProductionDashboard" },
+    // { text: 'Production', icon: faChartPie ,nav :"ProductionDashboard" },
+    { text: 'Purchase', icon: faBoxesPacking,nav :"PurchaseScreen" },
      { text: 'Sales', icon: faTruckMoving ,nav :"SalesScreen"},
-    //  { text: 'TrendAnalysis', icon: faInfoCircle ,nav :"TrendAnalysis"},
+     
   ];
 
   return (

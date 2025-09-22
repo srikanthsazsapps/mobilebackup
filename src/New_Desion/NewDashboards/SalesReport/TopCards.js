@@ -64,7 +64,7 @@ const TopCards = () => {
             <View style={styles.salesComparisonCard}>
                 {/* Background Image */}
                 <Image 
-                    source={require('../../../images/LOGOor.png')} // Replace with your local image path
+                    source={require('../../../images/LOGOor.png')}
                     style={styles.backgroundImage}
                     resizeMode="cover"
                 />
@@ -153,38 +153,36 @@ const TopCards = () => {
     );
 
     return (
-        <ScrollView style={styles.container}>
-            {renderSalesComparisonCard()}
-            {renderMetricsCard()}
-        </ScrollView>
+        <View style={styles.container}>
+            <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+                {renderSalesComparisonCard()}
+                {renderMetricsCard()}
+            </ScrollView>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        height:'100%',
     },
-
-    // Total Sales Card Styles (Blue Card)
+    scrollContainer: {
+        flex: 1,
+        height: '100%',
+    },
+    // Total Sales Card Styles (Blue Card) - No elevation
     totalSalesCardContainer: {
-        right:20,
+        right: 20,
     },
     totalSalesCard: {
         backgroundColor: 'rgba(7, 101, 208, 0.64)',
-        borderBottomRightRadius:20,
-        borderTopRightRadius:20,
+        borderBottomRightRadius: 20,
+        borderTopRightRadius: 20,
         padding: 10,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
+        // Removed shadow/elevation for clean fade
         width: '85%',
         height: 'auto',
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        marginTop:8,
+        marginTop: 8,
     },
     totalSalesContent: {
         alignItems: 'flex-start',
@@ -222,7 +220,7 @@ const styles = StyleSheet.create({
         marginLeft: 4,
     },
 
-    // Sales Comparison Card Styles (White Card)
+    // Sales Comparison Card Styles (White Card) - No elevation
     salesComparisonCardContainer: {
         paddingHorizontal: 16,
         marginBottom: 16,
@@ -231,18 +229,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#ffffffff',
         borderRadius: 16,
         padding: 20,
-        elevation: 3,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        height:'80%',
-        width:'100%',
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+        // Removed elevation and shadow for clean fade
+        height: '80%',
+        width: '100%',
         position: 'relative',
         overflow: 'hidden',
+        top:20,
     },
     // Background Image Styles
     backgroundImage: {
@@ -252,9 +244,8 @@ const styles = StyleSheet.create({
         right: 0,
         bottom: 0,
         zIndex: -1,
-        width:220,
-        height:190,
-        // opacity: 0.6,
+        width: 220,
+        height: 190,
     },
     // Overlay for text readability
     backgroundOverlay: {
@@ -274,7 +265,7 @@ const styles = StyleSheet.create({
     salesColumn: {
         flex: 1,
         alignItems: 'flex-start',
-        top:10,
+        top: 10,
         zIndex: 3,
     },
     salesColumnTitle: {
@@ -313,12 +304,11 @@ const styles = StyleSheet.create({
     divider: {
         width: 1,
         height: '80%',
-        // backgroundColor: '#e0e0e0',
         marginHorizontal: 20,
         zIndex: 3,
     },
 
-    // Metrics Card Styles (Separate cards in row with side-by-side images)
+    // Metrics Card Styles - No elevation
     metricsCardContainer: {
         paddingHorizontal: 16,
         marginBottom: 20,
@@ -326,17 +316,10 @@ const styles = StyleSheet.create({
     metricsCard: {
         backgroundColor: '#fff',
         borderRadius: 16,
-        elevation: 3,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+        // Removed elevation and shadow for clean fade
         flex: 1,
         marginHorizontal: 4,
-        bottom:60,
+        bottom: 40,
     },
     metricCardContent: {
         flexDirection: 'row',
@@ -363,7 +346,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#333',
         marginBottom: -4,
-        zIndex:2,
+        zIndex: 2,
     },
     metricValue: {
         fontSize: 24,
@@ -377,14 +360,13 @@ const styles = StyleSheet.create({
         backgroundColor: '#f0f7ff',
         justifyContent: 'center',
         alignItems: 'center',
-        zIndex:0,
+        zIndex: 0,
     },
     metricDivider: {
         position: 'absolute',
         right: 0,
         width: 1,
         height: '60%',
-        // backgroundColor: '#e0e0e0',
         top: '20%',
         zIndex: 1,
     },

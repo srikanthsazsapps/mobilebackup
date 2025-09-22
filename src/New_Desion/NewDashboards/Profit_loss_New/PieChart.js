@@ -343,8 +343,8 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 32,
-    padding: 5,
-    width: 370,
+    padding: 10,
+    width: 350,
     height: 250,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'center',
     height: '100%',
-    gap: 40,
+    gap: 20,
     flex: 1,
   },
   barContainer: {

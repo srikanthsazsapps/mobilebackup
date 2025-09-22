@@ -1,18 +1,20 @@
+// DashesDataContext.js
 import React, { createContext, useState, useEffect } from 'react';
 import { getStoredData } from './AsyncStorage';
 import base64 from 'react-native-base64';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+ 
 export const DashesDataContext = createContext();
-
+ 
 export const DASHBOARD_TYPES = {
   PRODUCTION: 'production',
   PROFIT_LOSS: 'profit&loss',
   ACCOUNTS: 'accounts',
   ASSET: 'asset',
+  AUDIT: 'Audit',
 };
-
+ 
 const combineDateTime = (date, time) => {
   if (!date || !time) {
     console.warn('DashesDataContext: Invalid date or time in combineDateTime', { date, time });
@@ -21,11 +23,11 @@ const combineDateTime = (date, time) => {
   const dateObj = new Date(date);
   const timeObj = new Date(time);
   dateObj.setHours(timeObj.getHours(), timeObj.getMinutes(), timeObj.getSeconds());
-  const formatted = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}:${String(dateObj.getSeconds()).padStart(2, '0')}`;
+  const formatted = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
   console.log('DashesDataContext: Combined date-time:', { inputDate: date, inputTime: time, output: formatted });
   return formatted;
 };
-
+ 
 const fetchDashesData = async (userData, dashName, fromDate, toDate) => {
   try {
     if (!userData?.Webkey || !userData?.Username || !userData?.Password) {
@@ -42,17 +44,24 @@ const fetchDashesData = async (userData, dashName, fromDate, toDate) => {
     console.log(`DashesDataContext: URL: https://${Webkey}.sazss.in/Api/DashesDatas`);
     console.log(`DashesDataContext: Payload:`, { dashname: dashName, fromDate, toDate });
     console.log(`DashesDataContext: Headers:`, { Authorization: authHeader });
-
+ 
     const response = await axios.post(
       `https://${Webkey}.sazss.in/Api/DashesDatas`,
       { dashname: dashName, fromDate, toDate },
       { headers: { Authorization: authHeader } }
     );
-
+ 
     console.log(`DashesDataContext: ${dashName} API Response Status:`, response.status);
     console.log(`DashesDataContext: ${dashName} API Response Data:`, JSON.stringify(response.data, null, 2));
-
-    if (dashName === DASHBOARD_TYPES.ASSET) {
+ 
+    if (dashName === DASHBOARD_TYPES.AUDIT) {
+      // Audit API returns an array of four arrays
+      if (!Array.isArray(response.data) || response.data.length !== 4) {
+        console.warn('DashesDataContext: Invalid Audit API response, expected 4 arrays', response.data);
+        return [[], [], [], []];
+      }
+      return response.data; // Return the four arrays as-is
+    } else if (dashName === DASHBOARD_TYPES.ASSET) {
       if (!Array.isArray(response.data)) {
         console.warn(`DashesDataContext: Invalid API response for ${dashName}, expected array`, response.data);
         return [];
@@ -65,11 +74,12 @@ const fetchDashesData = async (userData, dashName, fromDate, toDate) => {
             }
             return subArray.map(item => ({
               ...item,
-              Category: index === 0 ? 'Total Vehicle' :
-                        index === 1 ? 'In Transit' :
-                        index === 2 ? 'Idle Vehicle' :
-                        index === 3 ? 'Workshop' :
-                        index === 4 ? 'Fuel Consumption' : 'FC Volume',
+              Category:
+                index === 0 ? 'Total Vehicle' :
+                index === 1 ? 'In Transit' :
+                index === 2 ? 'Idle Vehicle' :
+                index === 3 ? 'Workshop' :
+                index === 4 ? 'Fuel Consumption' : 'FC Volume',
               VehicleNumber: item.VechNumber || item.VechileNumber || item.VehicleNumber || item.veh_number || item.vehicle_number || item.veh_no || null
             }));
           })
@@ -97,20 +107,22 @@ const fetchDashesData = async (userData, dashName, fromDate, toDate) => {
         data: error.response.data
       } : null
     });
-    return [];
+    return dashName === DASHBOARD_TYPES.AUDIT ? [[], [], [], []] : [];
   }
 };
-
+ 
 export const DashesDataProvider = ({ children }) => {
   const [profitLossData, setProfitLossData] = useState([]);
   const [accountsData, setAccountsData] = useState([]);
   const [productionData, setProductionData] = useState([]);
   const [assetData, setAssetData] = useState([]);
+  const [auditData, setAuditData] = useState([[], [], [], []]);
   const [loadingStates, setLoadingStates] = useState({
     profitLoss: false,
     accounts: false,
     production: false,
     asset: false,
+    audit: false,
     all: false,
   });
   const [selectedCompany, setSelectedCompany] = useState(0);
@@ -120,36 +132,27 @@ export const DashesDataProvider = ({ children }) => {
   const [endTime, setEndTime] = useState(new Date());
   const [previousProfitLossData, setPreviousProfitLossData] = useState([]);
   const [previousPeriodLoading, setPreviousPeriodLoading] = useState(false);
-
+ 
   const setDefaultTimeTo8AM = (date) => {
     const d = new Date(date);
     d.setHours(8, 0, 0, 0);
     return d;
   };
-
+ 
   useEffect(() => {
     const init = async () => {
       const now = new Date();
       const defaultTime = setDefaultTimeTo8AM(now);
       setStartTime(defaultTime);
       setEndTime(defaultTime);
-      if (now.getHours() < 8) {
-        const yesterday = new Date(now);
-        yesterday.setDate(now.getDate() - 1);
-        setStartDate(yesterday);
-        setEndDate(now);
-      } else {
-        const tomorrow = new Date(now);
-        tomorrow.setDate(now.getDate() + 1);
-        setStartDate(now);
-        setEndDate(tomorrow);
-      }
+      // Set "Today" as default and fetch data
+      await setTodayRange('profitLoss'); // Default to profitLoss or desired dashboard type
       const localCom = await AsyncStorage.getItem('SelectedCompany');
       setSelectedCompany(localCom ? JSON.parse(localCom) : 0);
     };
     init();
   }, []);
-
+ 
   const fetchSingleDashboard = async (dashboardType, customStartDate = null, customEndDate = null) => {
     try {
       console.log(`DashesDataContext: fetchSingleDashboard called with type: ${dashboardType}`, {
@@ -159,18 +162,19 @@ export const DashesDataProvider = ({ children }) => {
       setLoadingStates(prev => ({ ...prev, [dashboardType]: true }));
       const localData = await getStoredData('CompanyDetails');
       console.log('DashesDataContext: Company data:', JSON.stringify(localData, null, 2));
-
+ 
       if (!localData || !Array.isArray(localData) || localData.length === 0) {
         console.error('DashesDataContext: No valid CompanyDetails found');
-        return [];
+        return dashboardType === 'audit' ? [[], [], [], []] : [];
       }
-
+ 
       const fromDate = combineDateTime(customStartDate || startDate, startTime);
       const toDate = combineDateTime(customEndDate || endDate, endTime);
       console.log('DashesDataContext: Date range:', { fromDate, toDate });
-
-      let data = [];
+ 
+      let data = dashboardType === 'audit' ? [[], [], [], []] : [];
       let dashName = '';
+     
       switch (dashboardType) {
         case 'profitLoss':
         case 'profit&loss':
@@ -185,11 +189,14 @@ export const DashesDataProvider = ({ children }) => {
         case 'asset':
           dashName = DASHBOARD_TYPES.ASSET;
           break;
+        case 'audit':
+          dashName = DASHBOARD_TYPES.AUDIT;
+          break;
         default:
           dashName = DASHBOARD_TYPES.PROFIT_LOSS;
       }
       console.log(`DashesDataContext: Dashboard name: ${dashName}, Selected company: ${selectedCompany}`);
-
+ 
       if (selectedCompany === 0) {
         console.log('DashesDataContext: Fetching data for all companies');
         for (const company of localData) {
@@ -201,25 +208,29 @@ export const DashesDataProvider = ({ children }) => {
             continue;
           }
           const companyData = await fetchDashesData(company, dashName, fromDate, toDate);
-          data = [...data, ...companyData];
+          if (dashName === DASHBOARD_TYPES.AUDIT) {
+            data = companyData; // Keep as array of arrays
+          } else {
+            data = [...data, ...companyData];
+          }
         }
       } else {
         console.log('DashesDataContext: Fetching data for single company');
         const company = localData.find(c => c.id === selectedCompany);
         if (!company) {
           console.error('DashesDataContext: Selected company not found', { selectedCompany });
-          return [];
+          return dashboardType === 'audit' ? [[], [], [], []] : [];
         }
         if (!company.Webkey || !company.Username || !company.Password) {
           console.error('DashesDataContext: Selected company missing credentials', {
             companyId: company.id,
             companyName: company.CompanyName
           });
-          return [];
+          return dashboardType === 'audit' ? [[], [], [], []] : [];
         }
         data = await fetchDashesData(company, dashName, fromDate, toDate);
       }
-
+ 
       console.log(`DashesDataContext: Final data for ${dashboardType}:`, JSON.stringify(data, null, 2));
       if (dashboardType === 'accounts') {
         setAccountsData(data);
@@ -230,16 +241,18 @@ export const DashesDataProvider = ({ children }) => {
         console.log('DashesDataContext: Updated productionData:', JSON.stringify(data, null, 2));
       } else if (dashboardType === 'asset') {
         setAssetData(data);
+      } else if (dashboardType === 'audit') {
+        setAuditData(data);
       }
       return data;
     } catch (error) {
       console.error('DashesDataContext: Error fetching data:', error.message);
-      return [];
+      return dashboardType === 'audit' ? [[], [], [], []] : [];
     } finally {
       setLoadingStates(prev => ({ ...prev, [dashboardType]: false }));
     }
   };
-
+ 
   const fetchAllDashboards = async (customStartDate = null, customEndDate = null) => {
     try {
       setLoadingStates(prev => ({ ...prev, all: true }));
@@ -248,6 +261,7 @@ export const DashesDataProvider = ({ children }) => {
         fetchSingleDashboard('accounts', customStartDate, customEndDate),
         fetchSingleDashboard('production', customStartDate, customEndDate),
         fetchSingleDashboard('asset', customStartDate, customEndDate),
+        fetchSingleDashboard('audit', customStartDate, customEndDate),
       ]);
     } catch (error) {
       console.error('DashesDataContext: Error fetching all dashboards:', error.message);
@@ -255,7 +269,7 @@ export const DashesDataProvider = ({ children }) => {
       setLoadingStates(prev => ({ ...prev, all: false }));
     }
   };
-
+ 
   const fetchCustomDashboard = async (dashboardType, customStartDate, customEndDate) => {
     try {
       if (!customStartDate || !customEndDate || isNaN(new Date(customStartDate).getTime()) || isNaN(new Date(customEndDate).getTime())) {
@@ -275,9 +289,10 @@ export const DashesDataProvider = ({ children }) => {
         customStartDate: customStartDate.toISOString(),
         customEndDate: customEndDate.toISOString()
       });
-
-      let data = [];
+ 
+      let data = dashboardType === 'audit' ? [[], [], [], []] : [];
       let dashName = '';
+     
       switch (dashboardType) {
         case 'profitLoss':
         case 'profit&loss':
@@ -292,10 +307,13 @@ export const DashesDataProvider = ({ children }) => {
         case 'asset':
           dashName = DASHBOARD_TYPES.ASSET;
           break;
+        case 'audit':
+          dashName = DASHBOARD_TYPES.AUDIT;
+          break;
         default:
           dashName = DASHBOARD_TYPES.PROFIT_LOSS;
       }
-
+     
       if (selectedCompany === 0) {
         console.log('DashesDataContext: Fetching custom data for all companies');
         for (const company of localData) {
@@ -307,7 +325,11 @@ export const DashesDataProvider = ({ children }) => {
             continue;
           }
           const companyData = await fetchDashesData(company, dashName, formattedFromDate, formattedToDate);
-          data = [...data, ...companyData];
+          if (dashName === DASHBOARD_TYPES.AUDIT) {
+            data = companyData;
+          } else {
+            data = [...data, ...companyData];
+          }
         }
       } else {
         console.log('DashesDataContext: Fetching custom data for single company');
@@ -325,7 +347,7 @@ export const DashesDataProvider = ({ children }) => {
         }
         data = await fetchDashesData(company, dashName, formattedFromDate, formattedToDate);
       }
-
+ 
       console.log(`DashesDataContext: Custom data for ${dashboardType}:`, JSON.stringify(data, null, 2));
       if (dashboardType === 'accounts') {
         setAccountsData(data);
@@ -336,8 +358,10 @@ export const DashesDataProvider = ({ children }) => {
         console.log('DashesDataContext: Updated productionData (custom):', JSON.stringify(data, null, 2));
       } else if (dashboardType === 'asset') {
         setAssetData(data);
+      } else if (dashboardType === 'audit') {
+        setAuditData(data);
       }
-
+ 
       setStartDate(new Date(customStartDate));
       setEndDate(new Date(customEndDate));
       setStartTime(defaultStartTime);
@@ -348,11 +372,11 @@ export const DashesDataProvider = ({ children }) => {
       setLoadingStates(prev => ({ ...prev, [dashboardType]: false }));
     }
   };
-
+ 
   const refreshDashboardData = async () => {
     await fetchAllDashboards();
   };
-
+ 
   const setTodayRange = async (dashboardType = 'profitLoss') => {
     const now = new Date();
     const defaultTime = setDefaultTimeTo8AM(now);
@@ -374,50 +398,31 @@ export const DashesDataProvider = ({ children }) => {
     setEndTime(defaultTime);
     return data;
   };
-
+ 
   const setYesterdayRange = async (dashboardType = 'profitLoss') => {
     const now = new Date();
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
+ 
+    // Yesterday start: 00:00
+    const startOfYesterday = new Date(yesterday);
+    startOfYesterday.setHours(0, 0, 0, 0);
+ 
+    // Yesterday end: 23:59:59
+    const endOfYesterday = new Date(yesterday);
+    endOfYesterday.setHours(23, 59, 59, 999);
+ 
+    setStartDate(startOfYesterday);
+    setEndDate(endOfYesterday);
+ 
+    // keep 8AM default time for consistency in UI, but use full-day range for API
     const defaultTime = setDefaultTimeTo8AM(yesterday);
-
-    let data = [];
-    if (dashboardType === 'profitLoss' || dashboardType === 'profit&loss') {
-      const displayAndFetchDate = new Date(yesterday);
-      displayAndFetchDate.setHours(8, 0, 0, 0);
-      console.log('Yesterday range (profit&loss):', {
-        displayStart: displayAndFetchDate,
-        displayEnd: displayAndFetchDate,
-        fetchStart: displayAndFetchDate,
-        fetchEnd: displayAndFetchDate
-      });
-      setStartDate(displayAndFetchDate);
-      setEndDate(displayAndFetchDate);
-      setStartTime(defaultTime);
-      setEndTime(defaultTime);
-      data = await fetchSingleDashboard(dashboardType, displayAndFetchDate, displayAndFetchDate);
-    } else {
-      const fetchStartDate = new Date(yesterday);
-      fetchStartDate.setHours(8, 0, 0, 0);
-      const fetchEndDate = new Date(now);
-      fetchEndDate.setHours(8, 0, 0, 0);
-      const displayDate = new Date(yesterday);
-      displayDate.setHours(0, 0, 0, 0);
-      console.log('Yesterday range (production/other):', {
-        displayStart: displayDate,
-        displayEnd: displayDate,
-        fetchStart: fetchStartDate,
-        fetchEnd: fetchEndDate
-      });
-      setStartDate(displayDate);
-      setEndDate(displayDate);
-      setStartTime(defaultTime);
-      setEndTime(defaultTime);
-      data = await fetchSingleDashboard(dashboardType, fetchStartDate, fetchEndDate);
-    }
-    return data;
+    setStartTime(defaultTime);
+    setEndTime(defaultTime);
+ 
+    await fetchSingleDashboard(dashboardType, startOfYesterday, endOfYesterday);
   };
-
+ 
   const setWeekRange = async (dashboardType = 'profitLoss') => {
     const now = new Date();
     const defaultTime = setDefaultTimeTo8AM(now);
@@ -440,7 +445,7 @@ export const DashesDataProvider = ({ children }) => {
     const data = await fetchSingleDashboard(dashboardType, startOfWeek, endOfWeek);
     return data;
   };
-
+ 
   const setPreviousWeekRange = async (dashboardType = 'profitLoss') => {
     try {
       setPreviousPeriodLoading(true);
@@ -457,12 +462,12 @@ export const DashesDataProvider = ({ children }) => {
       const toDate = combineDateTime(endOfPreviousWeek, endTime);
       const localData = await getStoredData('CompanyDetails');
       let data = [];
-
+ 
       if (!localData || !Array.isArray(localData) || localData.length === 0) {
         console.error('DashesDataContext: No valid CompanyDetails found for previous week');
         return [];
       }
-
+ 
       if (selectedCompany === 0) {
         console.log('DashesDataContext: Fetching previous week data for all companies');
         for (const company of localData) {
@@ -492,7 +497,7 @@ export const DashesDataProvider = ({ children }) => {
         }
         data = await fetchDashesData(company, DASHBOARD_TYPES.PROFIT_LOSS, fromDate, toDate);
       }
-
+ 
       console.log('DashesDataContext: Previous week data:', JSON.stringify(data, null, 2));
       setPreviousProfitLossData(data);
       return data;
@@ -504,7 +509,7 @@ export const DashesDataProvider = ({ children }) => {
       setPreviousPeriodLoading(false);
     }
   };
-
+ 
   const setMonthRange = async (dashboardType = 'profitLoss') => {
     const now = new Date();
     const defaultTime = setDefaultTimeTo8AM(now);
@@ -521,7 +526,7 @@ export const DashesDataProvider = ({ children }) => {
     const data = await fetchSingleDashboard(dashboardType, startOfMonth, endOfMonth);
     return data;
   };
-
+ 
   const setPreviousTodayRange = async (dashboardType = 'profitLoss') => {
     try {
       setPreviousPeriodLoading(true);
@@ -532,12 +537,12 @@ export const DashesDataProvider = ({ children }) => {
       const toDate = combineDateTime(yesterday, endTime);
       const localData = await getStoredData('CompanyDetails');
       let data = [];
-
+ 
       if (!localData || !Array.isArray(localData) || localData.length === 0) {
         console.error('DashesDataContext: No valid CompanyDetails found for previous today');
         return [];
       }
-
+ 
       if (selectedCompany === 0) {
         console.log('DashesDataContext: Fetching previous today data for all companies');
         for (const company of localData) {
@@ -567,7 +572,7 @@ export const DashesDataProvider = ({ children }) => {
         }
         data = await fetchDashesData(company, DASHBOARD_TYPES.PROFIT_LOSS, fromDate, toDate);
       }
-
+ 
       console.log('DashesDataContext: Previous today data:', JSON.stringify(data, null, 2));
       setPreviousProfitLossData(data);
       return data;
@@ -579,7 +584,7 @@ export const DashesDataProvider = ({ children }) => {
       setPreviousPeriodLoading(false);
     }
   };
-
+ 
   const setPreviousYesterdayRange = async (dashboardType = 'profitLoss') => {
     try {
       setPreviousPeriodLoading(true);
@@ -590,12 +595,12 @@ export const DashesDataProvider = ({ children }) => {
       const toDate = combineDateTime(dayBefore, endTime);
       const localData = await getStoredData('CompanyDetails');
       let data = [];
-
+ 
       if (!localData || !Array.isArray(localData) || localData.length === 0) {
         console.error('DashesDataContext: No valid CompanyDetails found for previous yesterday');
         return [];
       }
-
+ 
       if (selectedCompany === 0) {
         console.log('DashesDataContext: Fetching previous yesterday data for all companies');
         for (const company of localData) {
@@ -625,7 +630,7 @@ export const DashesDataProvider = ({ children }) => {
         }
         data = await fetchDashesData(company, DASHBOARD_TYPES.PROFIT_LOSS, fromDate, toDate);
       }
-
+ 
       console.log('DashesDataContext: Previous yesterday data:', JSON.stringify(data, null, 2));
       setPreviousProfitLossData(data);
       return data;
@@ -637,7 +642,7 @@ export const DashesDataProvider = ({ children }) => {
       setPreviousPeriodLoading(false);
     }
   };
-
+ 
   const setPreviousMonthRange = async (dashboardType = 'profitLoss') => {
     try {
       setPreviousPeriodLoading(true);
@@ -648,12 +653,12 @@ export const DashesDataProvider = ({ children }) => {
       const toDate = combineDateTime(endOfLastMonth, endTime);
       const localData = await getStoredData('CompanyDetails');
       let data = [];
-
+ 
       if (!localData || !Array.isArray(localData) || localData.length === 0) {
         console.error('DashesDataContext: No valid CompanyDetails found for previous month');
         return [];
       }
-
+ 
       if (selectedCompany === 0) {
         console.log('DashesDataContext: Fetching previous month data for all companies');
         for (const company of localData) {
@@ -683,7 +688,7 @@ export const DashesDataProvider = ({ children }) => {
         }
         data = await fetchDashesData(company, DASHBOARD_TYPES.PROFIT_LOSS, fromDate, toDate);
       }
-
+ 
       console.log('DashesDataContext: Previous month data:', JSON.stringify(data, null, 2));
       setPreviousProfitLossData(data);
       return data;
@@ -695,7 +700,7 @@ export const DashesDataProvider = ({ children }) => {
       setPreviousPeriodLoading(false);
     }
   };
-
+ 
   const setPreviousCustomRange = async (dashboardType, customStartDate, customEndDate) => {
     try {
       setPreviousPeriodLoading(true);
@@ -706,12 +711,12 @@ export const DashesDataProvider = ({ children }) => {
       const toDate = combineDateTime(prevEnd, endTime);
       const localData = await getStoredData('CompanyDetails');
       let data = [];
-
+ 
       if (!localData || !Array.isArray(localData) || localData.length === 0) {
         console.error('DashesDataContext: No valid CompanyDetails found for previous custom range');
         return [];
       }
-
+ 
       if (selectedCompany === 0) {
         console.log('DashesDataContext: Fetching previous custom data for all companies');
         for (const company of localData) {
@@ -741,7 +746,7 @@ export const DashesDataProvider = ({ children }) => {
         }
         data = await fetchDashesData(company, DASHBOARD_TYPES.PROFIT_LOSS, fromDate, toDate);
       }
-
+ 
       console.log('DashesDataContext: Previous custom data:', JSON.stringify(data, null, 2));
       setPreviousProfitLossData(data);
       return data;
@@ -753,20 +758,20 @@ export const DashesDataProvider = ({ children }) => {
       setPreviousPeriodLoading(false);
     }
   };
-
+ 
   const getTotalByCategory = (category) => {
     if (!profitLossData.length) return 0;
     return profitLossData
       .filter(item => item?.Category?.toLowerCase() === category.toLowerCase())
       .reduce((sum, item) => sum + (parseFloat(item.Amount) || 0), 0);
   };
-
+ 
   const getNetProfitLoss = () => {
     const income = getTotalByCategory('Income');
     const expenses = getTotalByCategory('Expenses');
     return income - expenses;
   };
-
+ 
   const getInTransitVehicles = () => {
     if (!assetData.length) {
       console.log('DashesDataContext: No asset data for In Transit vehicles');
@@ -808,7 +813,7 @@ export const DashesDataProvider = ({ children }) => {
     console.log('DashesDataContext: In Transit vehicles:', JSON.stringify(vehicles, null, 2));
     return vehicles;
   };
-
+ 
   const getIdleVehicles = () => {
     if (!assetData.length) {
       console.log('DashesDataContext: No asset data for Idle vehicles');
@@ -850,7 +855,7 @@ export const DashesDataProvider = ({ children }) => {
     console.log('DashesDataContext: Idle vehicles:', JSON.stringify(vehicles, null, 2));
     return vehicles;
   };
-
+ 
   const getWorkshopVehicles = () => {
     if (!assetData.length) {
       console.log('DashesDataContext: No asset data for Workshop vehicles');
@@ -861,11 +866,11 @@ export const DashesDataProvider = ({ children }) => {
       .filter(item => {
         const status = (item?.TransStatus || item?.status || item?.Status || '').toLowerCase().trim();
         const hasWorkshopDate = item?.WorkshopDate || item?.workshop_date || item?.workshopdate || item?.Date || item?.date;
-        const isWorkshop = status.includes('workshop') || 
-                          status.includes('repair') || 
-                          status.includes('maintenance') || 
-                          status.includes('inworkshop') || 
-                          status.includes('under_repair') || 
+        const isWorkshop = status.includes('workshop') ||
+                          status.includes('repair') ||
+                          status.includes('maintenance') ||
+                          status.includes('inworkshop') ||
+                          status.includes('under_repair') ||
                           item?.Category?.toLowerCase() === 'workshop';
         console.log('DashesDataContext: Workshop filter:', {
           sno: item.sno,
@@ -897,7 +902,7 @@ export const DashesDataProvider = ({ children }) => {
     console.log('DashesDataContext: Workshop vehicles:', JSON.stringify(vehicles, null, 2));
     return vehicles;
   };
-
+ 
   const getHighestFuelConsumptionVehicle = () => {
     if (!assetData.length) {
       console.log('DashesDataContext: No asset data for Fuel Consumption');
@@ -923,7 +928,7 @@ export const DashesDataProvider = ({ children }) => {
     console.log('DashesDataContext: Highest Fuel Consumption:', JSON.stringify(result, null, 2));
     return result;
   };
-
+ 
   const getTotalVehicleCount = () => {
     if (!assetData.length) {
       console.log('DashesDataContext: No asset data for Total Vehicle Count');
@@ -940,7 +945,7 @@ export const DashesDataProvider = ({ children }) => {
     console.log('DashesDataContext: Total Vehicle Count:', count);
     return count;
   };
-
+ 
   return (
     <DashesDataContext.Provider
       value={{
@@ -955,6 +960,7 @@ export const DashesDataProvider = ({ children }) => {
         accountsData,
         productionData,
         assetData,
+        auditData,
         setAssetData,
         loadingStates,
         selectedCompany,
@@ -988,3 +994,4 @@ export const DashesDataProvider = ({ children }) => {
     </DashesDataContext.Provider>
   );
 };
+ 

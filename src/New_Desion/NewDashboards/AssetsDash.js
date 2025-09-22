@@ -9,7 +9,7 @@ import {
   SafeAreaView,
   Animated,
   ImageBackground,
-  Keyboard, // <=== import Keyboard API
+  Keyboard,
 } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import NetworkStatusIndicator from '../NetworkStatusIndicator';
@@ -64,7 +64,6 @@ const highlyUsedStyles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans-SemiBold',
   },
   viewMore: {
-    marginRight: 5,
     marginBottom: 15,
     bottom: 5,
     color: '#666',
@@ -124,7 +123,7 @@ const HighlyUsedVehicleCard = ({ onViewMore, highlyUsedVehicles, loaderVehicles 
           <View style={highlyUsedStyles.header}>
             <Text style={[GlobalStyle.heading6, highlyUsedStyles.title]}>Highly Used Vehicle</Text>
             <TouchableOpacity onPress={onViewMore}>
-              <Text style={[GlobalStyle.H11, highlyUsedStyles.viewMore]}>View More &gt;</Text>
+              <Text style={[GlobalStyle.viewMore, highlyUsedStyles.viewMore]}>View More &gt;</Text>
             </TouchableOpacity>
           </View>
           <View style={highlyUsedStyles.statsContainer}>
@@ -159,6 +158,12 @@ const VehicleDetailsScreen = () => {
   const navigation = useNavigation();
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const inputRef = useRef(null);
+
+  // NEW STATE VARIABLES FOR CONDITIONAL GESTURE
+  const [scrollOffset, setScrollOffset] = useState(0);
+  const [isScrollAtTop, setIsScrollAtTop] = useState(true);
+  const scrollViewRef = useRef(null);
+  const panRef = useRef(null);
 
   const {
     assetData,
@@ -275,7 +280,7 @@ const VehicleDetailsScreen = () => {
       id: item?.id || item?.sno || index + 1,
       number: item?.VechNumber || item?.VechileNumber || item?.VehicleNumber || 'N/A',
       status: 'Idle Vehicle',
-      color: '#FF5722',
+      color: '#FF5722', 
       idleDate: item?.IdleDate || '',
     }));
     const workshopVehicles = workshopArray.map((item, index) => ({
@@ -409,20 +414,47 @@ const VehicleDetailsScreen = () => {
     };
   };
 
-  const onPanGestureEvent = (event) => {
-    translateY.setValue(event.nativeEvent.translationY);
+  // NEW SCROLL HANDLER TO TRACK SCROLL POSITION
+  const handleVehicleListScroll = (event) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    setScrollOffset(offsetY);
+    setIsScrollAtTop(offsetY <= 5); // Small threshold for better UX
   };
 
+  // MODIFIED PAN GESTURE EVENT - ONLY WORKS WHEN AT TOP
+  const onPanGestureEvent = (event) => {
+    const translationY = event.nativeEvent.translationY;
+    
+    // Only allow downward expansion when scroll is at top
+    if (isScrollAtTop && translationY > 0) {
+      translateY.setValue(translationY);
+    } 
+    // Always allow upward gestures (closing) regardless of scroll position
+    else if (translationY < 0) {
+      translateY.setValue(translationY);
+    }
+  };
+
+  // MODIFIED PAN HANDLER STATE CHANGE
   const onPanHandlerStateChange = (event) => {
     if (event.nativeEvent.oldState === State.ACTIVE) {
       const { translationY: gestureTranslationY, velocityY } = event.nativeEvent;
       let toValue = 0;
       const currentPosition = translateY._value || 0;
-      if (currentPosition < 0) {
-        toValue = gestureTranslationY > -50 || velocityY > 200 ? 0 : -200;
+      
+      // Only process expand gestures if we were at scroll top
+      if (gestureTranslationY > 0 && !isScrollAtTop) {
+        // Reset to original position if trying to expand while scrolled
+        toValue = 0;
       } else {
-        toValue = gestureTranslationY < -50 || velocityY < -300 ? -250 : 0;
+        // Original logic
+        if (currentPosition < 0) {
+          toValue = gestureTranslationY > -50 || velocityY > 200 ? 0 : -200;
+        } else {
+          toValue = gestureTranslationY < -50 || velocityY < -300 ? -250 : 0;
+        }
       }
+      
       Animated.spring(translateY, {
         toValue,
         useNativeDriver: true,
@@ -509,7 +541,7 @@ const VehicleDetailsScreen = () => {
                     <View style={[styles.chartBarTop, { flex: 0.3, backgroundColor: barColors.top }]} />
                     <View style={[styles.chartBarBottom, { flex: 0.7, backgroundColor: barColors.bottom }]} />
                   </View>
-                  <Text style={[GlobalStyle.H14, styles.chartLabel]}>{label}</Text>
+                  <Text style={[GlobalStyle.dotlabel, styles.chartLabel]}>{label}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -554,9 +586,11 @@ const VehicleDetailsScreen = () => {
         {/* VEHICLE DETAILS */}
         <Animated.View style={[styles.vehicleWrapper, { transform: [{ translateY }] }]}>
           <PanGestureHandler 
+            ref={panRef}
             onGestureEvent={onPanGestureEvent} 
             onHandlerStateChange={onPanHandlerStateChange}
             hitSlop={{ top: 20, bottom: 20, left: 0, right: 0 }}
+            simultaneousHandlers={scrollViewRef}
           >
             <Animated.View style={styles.dragBarContainer}>
               <View style={styles.dragHandle} />
@@ -604,8 +638,12 @@ const VehicleDetailsScreen = () => {
           </ScrollView>
           {/* Vehicle List */}
           <ScrollView 
+            ref={scrollViewRef}
             contentContainerStyle={styles.vehicleDetailsSection} 
             showsVerticalScrollIndicator={false}
+            onScroll={handleVehicleListScroll}
+            scrollEventThrottle={16}
+            simultaneousHandlers={panRef}
             onTouchStart={(e) => e.stopPropagation()}
             onStartShouldSetResponder={() => true}
             onResponderTerminationRequest={() => false}
@@ -671,7 +709,7 @@ const styles = StyleSheet.create({
   dragBarContainer: { paddingVertical: 16, paddingHorizontal: 4, alignItems: 'center' },
   dragHandle: { width: 40, height: 4, backgroundColor: '#ddd', borderRadius: 2, marginBottom: 12 },
   vehicleDetailsSection: { padding: 16, paddingBottom: 500 },
-  sectionTitle: { marginBottom: 10 },
+  sectionTitle: { marginBottom: 10, marginLeft:10, },
   searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8f8f8', borderRadius: 100, marginBottom: 16, paddingHorizontal: 12 },
   searchInput: { flex: 1, paddingVertical: 12 },
   searchButton: { backgroundColor: '#2196F3', width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
@@ -679,7 +717,7 @@ const styles = StyleSheet.create({
   filterContainer: { flexDirection: 'row', paddingHorizontal: 4, gap: 8 },
   filterButton: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#f8f8f8', borderWidth: 1, borderColor: '#e0e0e0', height: 35, marginBottom: 40 },
   activeFilterButton: { backgroundColor: '#2196F3', borderColor: '#2196F3' },
-  filterText: {},
+  filterText: { bottom:5,height:100,},
   activeFilterText: { color: '#fff' },
   vehicleList: { gap: 8 },
   vehicleItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 4, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
@@ -689,7 +727,6 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 50 },
   loadingText: { fontSize: 16, color: '#666' },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 50 },
-  emptyText: { fontSize: 16, color: '#666', textAlign: 'center' },
 });
 
 export default VehicleDetailsScreen;

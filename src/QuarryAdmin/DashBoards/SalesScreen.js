@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
   },
   fixedTabsContainer: {
     paddingHorizontal: 5,
-    bottom:36,
+    bottom:26,
   },
   switchingTabs: {
     flexDirection: 'row',
