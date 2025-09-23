@@ -288,14 +288,19 @@ const ProfitlLoss = () => {
               ]}
               onPress={() => handleAmountFilterChange(filter)}
             >
-              <Text
-                style={[
-                  styles.itemTextStyle,
-                  selectedAmountFilter === filter && { color: "#000000" },
-                ]}
-              >
-                {filter}
-              </Text>
+              <View style={styles.dropdownItemContainer}>
+                {selectedAmountFilter === filter && (
+                  <View style={styles.activeDot} />
+                )}
+                <Text
+                  style={[
+                    styles.itemTextStyle,
+                    selectedAmountFilter === filter && { color: "#000000" },
+                  ]}
+                >
+                  {filter}
+                </Text>
+              </View>
             </TouchableOpacity>
           ))}
         </View>
@@ -404,7 +409,7 @@ const ProfitlLoss = () => {
                   maxHeight: isExpanded ? expandedHeight : screenHeight * 0.4,
                   marginBottom: 20,
                 }}
-                contentContainerStyle={{ paddingBottom: 400 }}
+                contentContainerStyle={{ paddingBottom: 300 }}
                 showsVerticalScrollIndicator={false}
               >
                 {dataToShow.length > 0 ? (
@@ -452,15 +457,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     height: 200,
+    fontFamily: 'PlusJakartaSans-SemiBold',
   },
   animatedCardPosition: {
     position: 'absolute',
     top: '20%',
     left: 0,
-    right: 0,
-    marginHorizontal: 20,  // Equal margin on both sides
+    right: 20,
+    marginHorizontal: 10,  // Equal margin on both sides
     marginTop: -40,
-    width: screenWidth - 60,  // Adjust width to account for margins
+    width: screenWidth - 70,  // Adjust width to account for margins
     zIndex: 10,
   },
   header: {
@@ -515,10 +521,23 @@ const styles = StyleSheet.create({
   },
   itemTextStyle: {
     color: 'black',
+    fontFamily: 'PlusJakartaSans-SemiBold',
   },
   dropdownItem: {
     paddingVertical: 12,
     paddingHorizontal: 18,
+    fontFamily: 'PlusJakartaSans-SemiBold',
+  },
+  dropdownItemContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  activeDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4A90E2',
   },
   topIncomeExpenseCard: {
     backgroundColor: '#fff',
@@ -534,11 +553,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    // right:10,
+    
   },
   topItemContainer: {
     flex: 1,
     alignItems: 'flex-start',
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
   },
   topItemLabel: {
     fontSize: 10,
@@ -554,13 +575,12 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     marginBottom: 4,
     fontFamily: 'PlusJakartaSans-SemiBold',
- 
   },
   topItemAmount: {
     fontSize: 18,
     fontWeight: '700',
   },
-  menuText: {},
+  menuText: { fontFamily: 'PlusJakartaSans-SemiBold',},
   content: { alignItems: "center" },
   gestureArea: {
     paddingTop: 12,
@@ -605,7 +625,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tabActive: { backgroundColor: "#4A90E2" },
-  tabText: { fontSize: 14, fontWeight: "500", color: "#333", fontFamily: 'PlusJakartaSans-SemiBold',
+  tabText: { 
+    fontSize: 14, 
+    fontWeight: "500", 
+    color: "#333", 
+    fontFamily: 'PlusJakartaSans-SemiBold',
   },
   tabTextActive: { color: "#fff" },
   detailsTitle: {
@@ -616,7 +640,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: "#111",
     fontFamily: 'PlusJakartaSans-SemiBold',
- 
   },
   // New combined search and filter row styles
   searchFilterRow: {
@@ -626,26 +649,27 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     gap: 10,
   },
- searchContainer: {
-  flex: 1,
-  flexDirection: "row",
-  alignItems: "center",
-  backgroundColor: "#f5f5f5",
-  borderRadius: 20,
-  paddingHorizontal: 12,
-  paddingVertical: 10,
-  borderWidth: 1,
-  borderColor: "#ddd",
-},
-searchIcon: {
-  marginRight: 8,
-},
-searchInput: {
-  flex: 1,
-  fontSize: 14,
-  color: "#333",
-  paddingVertical: 0,
-},
+  searchContainer: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: "#333",
+    paddingVertical: 0,
+    fontFamily: 'PlusJakartaSans-SemiBold',
+  },
   filterIconButton: {
     backgroundColor: "#4A90E2",
     borderRadius: 50,
@@ -688,12 +712,27 @@ searchInput: {
     alignItems: "center",
     marginRight: 12,
   },
-  avatarText: { color: "#fff", fontWeight: "700", fontSize: 12 ,fontFamily: 'PlusJakartaSans-SemiBold',
- },
-  listTitle: { fontSize: 15, fontWeight: "600", color: "#222" ,fontFamily: 'PlusJakartaSans-SemiBold',
- },
-  listTime: { fontSize: 12, color: "#777", marginTop: 2 },
-  listAmount: { fontSize: 15, fontWeight: "700",fontFamily: 'PlusJakartaSans-SemiBold',
+  avatarText: { 
+    color: "#fff", 
+    fontWeight: "700", 
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans-SemiBold',
+  },
+  listTitle: { 
+    fontSize: 15, 
+    fontWeight: "600", 
+    color: "#222",
+    fontFamily: 'PlusJakartaSans-SemiBold',
+  },
+  listTime: { 
+    fontSize: 12, 
+    color: "#777", 
+    marginTop: 2 
+  },
+  listAmount: { 
+    fontSize: 15, 
+    fontWeight: "700",
+    fontFamily: 'PlusJakartaSans-SemiBold',
   },
   loadingContainer: {
     flex: 1,
@@ -706,7 +745,6 @@ searchInput: {
     color: "#666",
     fontWeight: "500",
     fontFamily: 'PlusJakartaSans-SemiBold',
- 
   },
   noDataContainer: {
     flex: 1,
@@ -720,7 +758,6 @@ searchInput: {
     textAlign: "center",
     paddingHorizontal: 20,
     fontFamily: 'PlusJakartaSans-SemiBold',
- 
   },
 });
 

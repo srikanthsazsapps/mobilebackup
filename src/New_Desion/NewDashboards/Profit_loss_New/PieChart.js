@@ -17,7 +17,7 @@ const UpArrowIcon = ({ color = '#10B981', size = 12 }) => (
   }} />
 );
 
-const DownArrowIcon = ({ color = '#EF4444', size = 12 }) => (
+const DownArrowIcon = ({ color = '#E05B5B', size = 12 }) => (
   <View style={{ 
     width: 0, 
     height: 0, 
@@ -236,8 +236,8 @@ const PieChart = ({
             </Text>
           </View>
           <View style={styles.valueItem}>
-            <View style={[styles.dot, { backgroundColor: '#EF4444' }]} />
-            <Text style={[styles.valueText, { color: '#EF4444' }]}>
+            <View style={[styles.dot, { backgroundColor: '#E05B5B' }]} />
+            <Text style={[styles.valueText, { color: '#E05B5B' }]}>
               {formatCurrency(totalExpenses)}
             </Text>
           </View>
@@ -246,13 +246,13 @@ const PieChart = ({
           <View style={styles.chartWithStats}>
             <View style={styles.leftStats}>
               <View style={styles.percentageContainer}>
-                <Text style={[styles.percentage, { color: incomeIsUp ? '#10B981' : '#EF4444' }]}>
+                <Text style={[styles.percentage, { color: incomeIsUp ? '#10B981' : '#E05B5B' }]}>
                   {incomePercentageChange}
                 </Text>
                 {incomeIsUp ? (
                   <UpArrowIcon color="#10B981" />
                 ) : (
-                  <DownArrowIcon color="#EF4444" />
+                  <DownArrowIcon color="#E05B5B" />
                 )}
               </View>
               <View style={styles.changeContainer}>
@@ -285,7 +285,7 @@ const PieChart = ({
                   styles.bar,
                   {
                     height: expenseHeight,
-                    backgroundColor: '#EF4444',
+                    backgroundColor: '#E05B5B',
                   }
                 ]}>
                   <LinearGradient
@@ -298,13 +298,13 @@ const PieChart = ({
             </View>
             <View style={styles.rightStats}>
               <View style={styles.percentageContainer}>
-                <Text style={[styles.percentage, { color: expenseIsUp ? '#10B981' : '#EF4444' }]}>
+                <Text style={[styles.percentage, { color: expenseIsUp ? '#10B981' : '#E05B5B' }]}>
                   {expensePercentageChange}
                 </Text>
                 {expenseIsUp ? (
                   <UpArrowIcon color="#10B981" />
                 ) : (
-                  <DownArrowIcon color="#EF4444" />
+                  <DownArrowIcon color="#E05B5B" />
                 )}
               </View>
               <View style={styles.changeContainer}>
@@ -324,7 +324,7 @@ const PieChart = ({
             <Text style={styles.legendText}>Income</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#EF4444' }]} />
+            <View style={[styles.legendDot, { backgroundColor: '#E05B5B' }]} />
             <Text style={styles.legendText}>Expense</Text>
           </View>
         </View>
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 32,
-    padding: 10,
+    padding: 0,
     width: 350,
     height: 250,
     shadowColor: '#000',
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   percentage: {
-    fontSize: 20,
+    fontSize: 15,
     fontWeight: '800',
     marginRight: 4,
     textShadowColor: 'rgba(0,0,0,0.05)',
@@ -465,12 +465,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 50,
     marginBottom: 10,
     marginTop: 10,
+    gap:110,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
     justifyContent: 'flex-start',
+    // left:10,
+    // paddingLeft:50,
   },
   legendDot: {
     width: 16,

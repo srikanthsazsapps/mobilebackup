@@ -24,7 +24,7 @@ const combineDateTime = (date, time) => {
   const timeObj = new Date(time);
   dateObj.setHours(timeObj.getHours(), timeObj.getMinutes(), timeObj.getSeconds());
   const formatted = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')} ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
-  console.log('DashesDataContext: Combined date-time:', { inputDate: date, inputTime: time, output: formatted });
+  // console.log('DashesDataContext: Combined date-time:', { inputDate: date, inputTime: time, output: formatted });
   return formatted;
 };
  
@@ -40,10 +40,10 @@ const fetchDashesData = async (userData, dashName, fromDate, toDate) => {
     }
     const { Webkey, Username, Password } = userData;
     const authHeader = `Basic ${base64.encode(`${Username.trim()}:${Password.trim()}`)}`;
-    console.log(`DashesDataContext: Fetching ${dashName} data...`);
-    console.log(`DashesDataContext: URL: https://${Webkey}.sazss.in/Api/DashesDatas`);
-    console.log(`DashesDataContext: Payload:`, { dashname: dashName, fromDate, toDate });
-    console.log(`DashesDataContext: Headers:`, { Authorization: authHeader });
+    // console.log(`DashesDataContext: Fetching ${dashName} data...`);
+    // console.log(`DashesDataContext: URL: https://${Webkey}.sazss.in/Api/DashesDatas`);
+    // console.log(`DashesDataContext: Payload:`, { dashname: dashName, fromDate, toDate });
+    // console.log(`DashesDataContext: Headers:`, { Authorization: authHeader });
  
     const response = await axios.post(
       `https://${Webkey}.sazss.in/Api/DashesDatas`,
@@ -51,8 +51,8 @@ const fetchDashesData = async (userData, dashName, fromDate, toDate) => {
       { headers: { Authorization: authHeader } }
     );
  
-    console.log(`DashesDataContext: ${dashName} API Response Status:`, response.status);
-    console.log(`DashesDataContext: ${dashName} API Response Data:`, JSON.stringify(response.data, null, 2));
+    // console.log(`DashesDataContext: ${dashName} API Response Status:`, response.status);
+    // console.log(`DashesDataContext: ${dashName} API Response Data:`, JSON.stringify(response.data, null, 2));
  
     if (dashName === DASHBOARD_TYPES.AUDIT) {
       // Audit API returns an array of four arrays
@@ -92,11 +92,11 @@ const fetchDashesData = async (userData, dashName, fromDate, toDate) => {
                       item?.FCDate ? 'FC Volume' : 'Total Vehicle',
             VehicleNumber: item.VechNumber || item.VechileNumber || item.VehicleNumber || item.veh_number || item.vehicle_number || item.veh_no || null
           }));
-      console.log(`DashesDataContext: Processed ${dashName} data:`, JSON.stringify(data, null, 2));
+      // console.log(`DashesDataContext: Processed ${dashName} data:`, JSON.stringify(data, null, 2));
       return data;
     } else {
       const data = Array.isArray(response.data) ? response.data : [];
-      console.log(`DashesDataContext: Processed ${dashName} data:`, JSON.stringify(data, null, 2));
+      // console.log(`DashesDataContext: Processed ${dashName} data:`, JSON.stringify(data, null, 2));
       return data;
     }
   } catch (error) {
@@ -161,7 +161,7 @@ export const DashesDataProvider = ({ children }) => {
       });
       setLoadingStates(prev => ({ ...prev, [dashboardType]: true }));
       const localData = await getStoredData('CompanyDetails');
-      console.log('DashesDataContext: Company data:', JSON.stringify(localData, null, 2));
+      // console.log('DashesDataContext: Company data:', JSON.stringify(localData, null, 2));
  
       if (!localData || !Array.isArray(localData) || localData.length === 0) {
         console.error('DashesDataContext: No valid CompanyDetails found');
@@ -170,7 +170,7 @@ export const DashesDataProvider = ({ children }) => {
  
       const fromDate = combineDateTime(customStartDate || startDate, startTime);
       const toDate = combineDateTime(customEndDate || endDate, endTime);
-      console.log('DashesDataContext: Date range:', { fromDate, toDate });
+      // console.log('DashesDataContext: Date range:', { fromDate, toDate });
  
       let data = dashboardType === 'audit' ? [[], [], [], []] : [];
       let dashName = '';
@@ -195,10 +195,10 @@ export const DashesDataProvider = ({ children }) => {
         default:
           dashName = DASHBOARD_TYPES.PROFIT_LOSS;
       }
-      console.log(`DashesDataContext: Dashboard name: ${dashName}, Selected company: ${selectedCompany}`);
+      // console.log(`DashesDataContext: Dashboard name: ${dashName}, Selected company: ${selectedCompany}`);
  
       if (selectedCompany === 0) {
-        console.log('DashesDataContext: Fetching data for all companies');
+        // console.log('DashesDataContext: Fetching data for all companies');
         for (const company of localData) {
           if (!company.Webkey || !company.Username || !company.Password) {
             console.warn('DashesDataContext: Skipping company due to missing credentials', {
@@ -215,7 +215,7 @@ export const DashesDataProvider = ({ children }) => {
           }
         }
       } else {
-        console.log('DashesDataContext: Fetching data for single company');
+        // console.log('DashesDataContext: Fetching data for single company');
         const company = localData.find(c => c.id === selectedCompany);
         if (!company) {
           console.error('DashesDataContext: Selected company not found', { selectedCompany });
@@ -231,14 +231,14 @@ export const DashesDataProvider = ({ children }) => {
         data = await fetchDashesData(company, dashName, fromDate, toDate);
       }
  
-      console.log(`DashesDataContext: Final data for ${dashboardType}:`, JSON.stringify(data, null, 2));
+      // console.log(`DashesDataContext: Final data for ${dashboardType}:`, JSON.stringify(data, null, 2));
       if (dashboardType === 'accounts') {
         setAccountsData(data);
       } else if (dashboardType === 'profitLoss' || dashboardType === 'profit&loss') {
         setProfitLossData(data);
       } else if (dashboardType === 'production') {
         setProductionData(data);
-        console.log('DashesDataContext: Updated productionData:', JSON.stringify(data, null, 2));
+        // console.log('DashesDataContext: Updated productionData:', JSON.stringify(data, null, 2));
       } else if (dashboardType === 'asset') {
         setAssetData(data);
       } else if (dashboardType === 'audit') {
@@ -315,7 +315,7 @@ export const DashesDataProvider = ({ children }) => {
       }
      
       if (selectedCompany === 0) {
-        console.log('DashesDataContext: Fetching custom data for all companies');
+        // console.log('DashesDataContext: Fetching custom data for all companies');
         for (const company of localData) {
           if (!company.Webkey || !company.Username || !company.Password) {
             console.warn('DashesDataContext: Skipping company due to missing credentials', {
@@ -332,7 +332,7 @@ export const DashesDataProvider = ({ children }) => {
           }
         }
       } else {
-        console.log('DashesDataContext: Fetching custom data for single company');
+        // console.log('DashesDataContext: Fetching custom data for single company');
         const company = localData.find(c => c.id === selectedCompany);
         if (!company) {
           console.error('DashesDataContext: Selected company not found', { selectedCompany });
@@ -348,14 +348,14 @@ export const DashesDataProvider = ({ children }) => {
         data = await fetchDashesData(company, dashName, formattedFromDate, formattedToDate);
       }
  
-      console.log(`DashesDataContext: Custom data for ${dashboardType}:`, JSON.stringify(data, null, 2));
+      // console.log(`DashesDataContext: Custom data for ${dashboardType}:`, JSON.stringify(data, null, 2));
       if (dashboardType === 'accounts') {
         setAccountsData(data);
       } else if (dashboardType === 'profitLoss' || dashboardType === 'profit&loss') {
         setProfitLossData(data);
       } else if (dashboardType === 'production') {
         setProductionData(data);
-        console.log('DashesDataContext: Updated productionData (custom):', JSON.stringify(data, null, 2));
+        // console.log('DashesDataContext: Updated productionData (custom):', JSON.stringify(data, null, 2));
       } else if (dashboardType === 'asset') {
         setAssetData(data);
       } else if (dashboardType === 'audit') {
@@ -469,7 +469,7 @@ export const DashesDataProvider = ({ children }) => {
       }
  
       if (selectedCompany === 0) {
-        console.log('DashesDataContext: Fetching previous week data for all companies');
+        // console.log('DashesDataContext: Fetching previous week data for all companies');
         for (const company of localData) {
           if (!company.Webkey || !company.Username || !company.Password) {
             console.warn('DashesDataContext: Skipping company due to missing credentials', {
@@ -482,7 +482,7 @@ export const DashesDataProvider = ({ children }) => {
           data = [...data, ...companyData];
         }
       } else {
-        console.log('DashesDataContext: Fetching previous week data for single company');
+        // console.log('DashesDataContext: Fetching previous week data for single company');
         const company = localData.find(c => c.id === selectedCompany);
         if (!company) {
           console.error('DashesDataContext: Selected company not found', { selectedCompany });
@@ -498,7 +498,7 @@ export const DashesDataProvider = ({ children }) => {
         data = await fetchDashesData(company, DASHBOARD_TYPES.PROFIT_LOSS, fromDate, toDate);
       }
  
-      console.log('DashesDataContext: Previous week data:', JSON.stringify(data, null, 2));
+      // console.log('DashesDataContext: Previous week data:', JSON.stringify(data, null, 2));
       setPreviousProfitLossData(data);
       return data;
     } catch (error) {
@@ -544,7 +544,7 @@ export const DashesDataProvider = ({ children }) => {
       }
  
       if (selectedCompany === 0) {
-        console.log('DashesDataContext: Fetching previous today data for all companies');
+        // console.log('DashesDataContext: Fetching previous today data for all companies');
         for (const company of localData) {
           if (!company.Webkey || !company.Username || !company.Password) {
             console.warn('DashesDataContext: Skipping company due to missing credentials', {
@@ -557,7 +557,7 @@ export const DashesDataProvider = ({ children }) => {
           data = [...data, ...companyData];
         }
       } else {
-        console.log('DashesDataContext: Fetching previous today data for single company');
+        // console.log('DashesDataContext: Fetching previous today data for single company');
         const company = localData.find(c => c.id === selectedCompany);
         if (!company) {
           console.error('DashesDataContext: Selected company not found', { selectedCompany });
@@ -573,7 +573,7 @@ export const DashesDataProvider = ({ children }) => {
         data = await fetchDashesData(company, DASHBOARD_TYPES.PROFIT_LOSS, fromDate, toDate);
       }
  
-      console.log('DashesDataContext: Previous today data:', JSON.stringify(data, null, 2));
+      // console.log('DashesDataContext: Previous today data:', JSON.stringify(data, null, 2));
       setPreviousProfitLossData(data);
       return data;
     } catch (error) {
@@ -602,7 +602,7 @@ export const DashesDataProvider = ({ children }) => {
       }
  
       if (selectedCompany === 0) {
-        console.log('DashesDataContext: Fetching previous yesterday data for all companies');
+        // console.log('DashesDataContext: Fetching previous yesterday data for all companies');
         for (const company of localData) {
           if (!company.Webkey || !company.Username || !company.Password) {
             console.warn('DashesDataContext: Skipping company due to missing credentials', {
@@ -615,7 +615,7 @@ export const DashesDataProvider = ({ children }) => {
           data = [...data, ...companyData];
         }
       } else {
-        console.log('DashesDataContext: Fetching previous yesterday data for single company');
+        // console.log('DashesDataContext: Fetching previous yesterday data for single company');
         const company = localData.find(c => c.id === selectedCompany);
         if (!company) {
           console.error('DashesDataContext: Selected company not found', { selectedCompany });
@@ -631,7 +631,7 @@ export const DashesDataProvider = ({ children }) => {
         data = await fetchDashesData(company, DASHBOARD_TYPES.PROFIT_LOSS, fromDate, toDate);
       }
  
-      console.log('DashesDataContext: Previous yesterday data:', JSON.stringify(data, null, 2));
+      // console.log('DashesDataContext: Previous yesterday data:', JSON.stringify(data, null, 2));
       setPreviousProfitLossData(data);
       return data;
     } catch (error) {
@@ -660,7 +660,7 @@ export const DashesDataProvider = ({ children }) => {
       }
  
       if (selectedCompany === 0) {
-        console.log('DashesDataContext: Fetching previous month data for all companies');
+        // console.log('DashesDataContext: Fetching previous month data for all companies');
         for (const company of localData) {
           if (!company.Webkey || !company.Username || !company.Password) {
             console.warn('DashesDataContext: Skipping company due to missing credentials', {
@@ -673,7 +673,7 @@ export const DashesDataProvider = ({ children }) => {
           data = [...data, ...companyData];
         }
       } else {
-        console.log('DashesDataContext: Fetching previous month data for single company');
+        // console.log('DashesDataContext: Fetching previous month data for single company');
         const company = localData.find(c => c.id === selectedCompany);
         if (!company) {
           console.error('DashesDataContext: Selected company not found', { selectedCompany });
@@ -689,7 +689,7 @@ export const DashesDataProvider = ({ children }) => {
         data = await fetchDashesData(company, DASHBOARD_TYPES.PROFIT_LOSS, fromDate, toDate);
       }
  
-      console.log('DashesDataContext: Previous month data:', JSON.stringify(data, null, 2));
+      // console.log('DashesDataContext: Previous month data:', JSON.stringify(data, null, 2));
       setPreviousProfitLossData(data);
       return data;
     } catch (error) {
@@ -718,7 +718,7 @@ export const DashesDataProvider = ({ children }) => {
       }
  
       if (selectedCompany === 0) {
-        console.log('DashesDataContext: Fetching previous custom data for all companies');
+        // console.log('DashesDataContext: Fetching previous custom data for all companies');
         for (const company of localData) {
           if (!company.Webkey || !company.Username || !company.Password) {
             console.warn('DashesDataContext: Skipping company due to missing credentials', {
@@ -731,7 +731,7 @@ export const DashesDataProvider = ({ children }) => {
           data = [...data, ...companyData];
         }
       } else {
-        console.log('DashesDataContext: Fetching previous custom data for single company');
+        // console.log('DashesDataContext: Fetching previous custom data for single company');
         const company = localData.find(c => c.id === selectedCompany);
         if (!company) {
           console.error('DashesDataContext: Selected company not found', { selectedCompany });
@@ -747,7 +747,7 @@ export const DashesDataProvider = ({ children }) => {
         data = await fetchDashesData(company, DASHBOARD_TYPES.PROFIT_LOSS, fromDate, toDate);
       }
  
-      console.log('DashesDataContext: Previous custom data:', JSON.stringify(data, null, 2));
+      // console.log('DashesDataContext: Previous custom data:', JSON.stringify(data, null, 2));
       setPreviousProfitLossData(data);
       return data;
     } catch (error) {
@@ -777,7 +777,7 @@ export const DashesDataProvider = ({ children }) => {
       console.log('DashesDataContext: No asset data for In Transit vehicles');
       return [];
     }
-    console.log('DashesDataContext: Inspecting assetData for In Transit:', JSON.stringify(assetData, null, 2));
+    // console.log('DashesDataContext: Inspecting assetData for In Transit:', JSON.stringify(assetData, null, 2));
     const vehicles = assetData
       .filter(item => {
         const status = (item?.TransStatus || item?.status || item?.Status || '').toLowerCase().trim();
@@ -810,7 +810,7 @@ export const DashesDataProvider = ({ children }) => {
           statusLabel
         };
       });
-    console.log('DashesDataContext: In Transit vehicles:', JSON.stringify(vehicles, null, 2));
+    // console.log('DashesDataContext: In Transit vehicles:', JSON.stringify(vehicles, null, 2));
     return vehicles;
   };
  
@@ -819,7 +819,7 @@ export const DashesDataProvider = ({ children }) => {
       console.log('DashesDataContext: No asset data for Idle vehicles');
       return [];
     }
-    console.log('DashesDataContext: Inspecting assetData for Idle:', JSON.stringify(assetData, null, 2));
+    // console.log('DashesDataContext: Inspecting assetData for Idle:', JSON.stringify(assetData, null, 2));
     const vehicles = assetData
       .filter(item => {
         const status = (item?.TransStatus || item?.status || item?.Status || '').toLowerCase().trim();
@@ -852,16 +852,16 @@ export const DashesDataProvider = ({ children }) => {
           statusLabel
         };
       });
-    console.log('DashesDataContext: Idle vehicles:', JSON.stringify(vehicles, null, 2));
+    // console.log('DashesDataContext: Idle vehicles:', JSON.stringify(vehicles, null, 2));
     return vehicles;
   };
  
   const getWorkshopVehicles = () => {
     if (!assetData.length) {
-      console.log('DashesDataContext: No asset data for Workshop vehicles');
+      // console.log('DashesDataContext: No asset data for Workshop vehicles');
       return [];
     }
-    console.log('DashesDataContext: Inspecting assetData for Workshop:', JSON.stringify(assetData, null, 2));
+    // console.log('DashesDataContext: Inspecting assetData for Workshop:', JSON.stringify(assetData, null, 2));
     const vehicles = assetData
       .filter(item => {
         const status = (item?.TransStatus || item?.status || item?.Status || '').toLowerCase().trim();
@@ -899,19 +899,19 @@ export const DashesDataProvider = ({ children }) => {
           statusLabel
         };
       });
-    console.log('DashesDataContext: Workshop vehicles:', JSON.stringify(vehicles, null, 2));
+    // console.log('DashesDataContext: Workshop vehicles:', JSON.stringify(vehicles, null, 2));
     return vehicles;
   };
  
   const getHighestFuelConsumptionVehicle = () => {
     if (!assetData.length) {
-      console.log('DashesDataContext: No asset data for Fuel Consumption');
+      // console.log('DashesDataContext: No asset data for Fuel Consumption');
       return null;
     }
-    console.log('DashesDataContext: Inspecting assetData for Fuel:', JSON.stringify(assetData, null, 2));
+    // console.log('DashesDataContext: Inspecting assetData for Fuel:', JSON.stringify(assetData, null, 2));
     const fuelData = assetData.filter(item => item.Category === 'Fuel Consumption' && item?.Qty && parseFloat(item.Qty) > 0);
     if (!fuelData.length) {
-      console.log('DashesDataContext: No valid fuel consumption data');
+      // console.log('DashesDataContext: No valid fuel consumption data');
       return null;
     }
     const highestConsumption = fuelData.reduce((max, item) => {
@@ -925,13 +925,13 @@ export const DashesDataProvider = ({ children }) => {
       Qty: highestConsumption.Qty || '0',
       lastUsed: highestConsumption.Date || highestConsumption.date || new Date().toISOString().split('T')[0]
     };
-    console.log('DashesDataContext: Highest Fuel Consumption:', JSON.stringify(result, null, 2));
+    // console.log('DashesDataContext: Highest Fuel Consumption:', JSON.stringify(result, null, 2));
     return result;
   };
  
   const getTotalVehicleCount = () => {
     if (!assetData.length) {
-      console.log('DashesDataContext: No asset data for Total Vehicle Count');
+      // console.log('DashesDataContext: No asset data for Total Vehicle Count');
       return 0;
     }
     const uniqueVehicles = new Set();
@@ -942,7 +942,7 @@ export const DashesDataProvider = ({ children }) => {
       }
     });
     const count = uniqueVehicles.size;
-    console.log('DashesDataContext: Total Vehicle Count:', count);
+    // console.log('DashesDataContext: Total Vehicle Count:', count);
     return count;
   };
  

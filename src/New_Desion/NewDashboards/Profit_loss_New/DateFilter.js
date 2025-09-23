@@ -209,7 +209,7 @@ const DateFilter = ({ dashboardType = "profitLoss", onFilterChange }) => {
           <Text style={styles.selectedText}>Loading...</Text>
         ) : (
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <FontAwesomeIcon icon={faFilter} size={18} color="white" style={{ marginRight: showText ? 5 : 0 }} />
+            <FontAwesomeIcon icon={faFilter} size={16} color="white" style={{ marginRight: showText ? 5 : 0 }} />
             {/* {showText && (
               <Text style={styles.selectedText} numberOfLines={1}>
                 {customRangeText || selectedOption}
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
     borderColor: "#e9ecef",
     paddingHorizontal: 10,
     paddingVertical: 6,
-    minWidth: 50,
+    minWidth: 35,
     minHeight: 35,
     justifyContent: "center",
   },

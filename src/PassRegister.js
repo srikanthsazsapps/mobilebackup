@@ -196,7 +196,7 @@ const PassRegister = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#ffffff',
   },
   
   // Top 50% - Image Container
@@ -228,6 +228,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
     justifyContent: 'space-between',
+    padding:40,
   },
 
   scrollContent: {
