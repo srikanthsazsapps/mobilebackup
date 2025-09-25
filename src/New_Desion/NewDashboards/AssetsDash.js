@@ -708,7 +708,7 @@ const styles = StyleSheet.create({
   vehicleWrapper: { backgroundColor: '#fff', padding: 10, borderTopLeftRadius: 40, borderTopRightRadius: 40, elevation: 5, top: -20 },
   dragBarContainer: { paddingVertical: 16, paddingHorizontal: 4, alignItems: 'center' },
   dragHandle: { width: 40, height: 4, backgroundColor: '#ddd', borderRadius: 2, marginBottom: 12 },
-  vehicleDetailsSection: { padding: 16, paddingBottom: 500 },
+  vehicleDetailsSection: { padding: 16, paddingBottom: 700 },
   sectionTitle: { marginBottom: 10, marginLeft:10, },
   searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8f8f8', borderRadius: 100, marginBottom: 16, paddingHorizontal: 12 },
   searchInput: { flex: 1, paddingVertical: 12 },
